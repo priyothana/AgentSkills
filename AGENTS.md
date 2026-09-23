@@ -75,13 +75,26 @@ This repo has three composable layers. They have different jobs and should not b
 - **Personas** (`agents/<role>.md`) — roles with a perspective and an output format. The *who*.
 - **Slash commands** (`.claude/commands/*.md`) — user-facing entry points. The *when*. The orchestration layer.
 
-Composition rule: **the user (or a slash command) is the orchestrator. Personas do not invoke other personas.** A persona may invoke skills.
+Composition rule: **the user (or a slash command) is the orchestrator. Personas do not invoke other personas** — with one deliberate, bounded exception: the `orchestrator` persona (see [Autonomous Orchestration Mode](#autonomous-orchestration-mode) below). Every other persona follows the rule as written. A persona may invoke skills.
 
-The only multi-persona orchestration pattern this repo endorses is **parallel fan-out with a merge step** — used by `/ship` to run `code-reviewer`, `security-auditor`, and `test-engineer` concurrently and synthesize their reports. Do not build a "router" persona that decides which other persona to call; that's the job of slash commands and intent mapping.
+The multi-persona orchestration patterns this repo endorses are **parallel fan-out with a merge step** (used by `/ship` to run `code-reviewer`, `security-auditor`, and `test-engineer` concurrently and synthesize their reports) and, as of this section, **autonomous sequential orchestration with feedback loops** (used by `/autopilot` and the `orchestrator` persona). Do not build any *other* "router" persona that decides which other persona to call; that job belongs to `orchestrator`, slash commands, and intent mapping — not to a new one-off coordinator.
 
 See [docs/agents.md](docs/agents.md) for the decision matrix and [references/orchestration-patterns.md](references/orchestration-patterns.md) for the full pattern catalog.
 
-**Claude Code interop:** the personas in `agents/` work as Claude Code subagents (auto-discovered from this plugin's `agents/` directory) and as Agent Teams teammates (referenced by name when spawning). Two platform constraints align with our rules: subagents cannot spawn other subagents, and teams cannot nest. Plugin agents silently ignore the `hooks`, `mcpServers`, and `permissionMode` frontmatter fields.
+**Claude Code interop:** the personas in `agents/` work as Claude Code subagents (auto-discovered from this plugin's `agents/` directory) and as Agent Teams teammates (referenced by name when spawning). Two platform constraints align with our rules: subagents cannot spawn other subagents, and teams cannot nest. Plugin agents silently ignore the `hooks`, `mcpServers`, and `permissionMode` frontmatter fields. The `orchestrator` persona's exception does not defeat this constraint — it works because `orchestrator` runs at the top-level session (or as an Agent Teams lead), never as a leaf subagent that would itself need to spawn subagents.
+
+## Autonomous Orchestration Mode
+
+For a raw user story, feature request, enhancement, or bug report pasted with **no persona or slash command named**, treat it as an implicit `/autopilot` invocation: adopt the `orchestrator` persona and follow the `autonomous-orchestration` skill, rather than waiting for the user to name a persona or command for each step.
+
+- **Classify** the request (New Feature/User Story, Bug Fix, Refactor, Performance, Security, or Ambiguous) using the table in [skills/autonomous-orchestration/SKILL.md](skills/autonomous-orchestration/SKILL.md).
+- **Plan and sequence** specialist personas per [workflows/routing-table.md](workflows/routing-table.md), tracking stage, owner, blockers, and history in a `workflow-state.json` (schema: [workflows/workflow-state.schema.json](workflows/workflow-state.schema.json)).
+- **Drive the feedback loop automatically**: Developer → `code-reviewer` → `test-engineer`, with a REQUEST CHANGES or bug-found verdict routing back to the originating developer persona, until both sign off. Security/performance gates run wherever the classification or `architecture-agent`'s risk flags call for them.
+- **Escalate, don't loop forever**: 3 failed loops on the same stage (1 for a recurring Critical security finding) routes to `tech-lead` instead of another retry.
+- **Checkpoint before Ship by default**: request human approval before `deployment-agent` runs, unless the project has explicitly opted into an auto-deploy policy (see [workflows/orchestrator-state-machine.md](workflows/orchestrator-state-machine.md)).
+- **Skip this mode** for small, low-blast-radius changes (2 files or fewer, under 50 lines, no auth/payments/data-access/config impact) — use direct persona invocation or a single-persona command instead, same as `/ship`'s own skip condition.
+
+This is the one place in this repo where a persona (`orchestrator`) is allowed to dispatch other personas, and only in the depth-1, state-tracked, loop-bounded way described in [docs/agents.md](docs/agents.md#autonomous-orchestration-the-one-exception). It supersedes Anti-patterns A and C in [references/orchestration-patterns.md](references/orchestration-patterns.md) for this one persona only — every other persona in `agents/` still may not call another persona directly, and still may not build a second "router."
 
 ## Creating a New Skill
 
