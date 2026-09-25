@@ -1,0 +1,60 @@
+{
+  "skill_name": "multi-tenant-architecture",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "Make sure one customer organization can never see another organization's invoices",
+        "top_k": 3
+      },
+      {
+        "prompt": "Our background worker loses the tenant context, fix the job so it only touches that tenant's data",
+        "top_k": 3
+      },
+      {
+        "prompt": "Should we use a tenant_id column, schema per tenant, or a database per tenant?",
+        "top_k": 1
+      },
+      {
+        "prompt": "Write a migration that runs across every tenant database in our SaaS app",
+        "top_k": 3
+      },
+      {
+        "prompt": "Add tests proving workspace A can't read workspace B's files or cached data",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "Add rate limiting and bcrypt password hashing to the login endpoint",
+        "owner": "security-and-hardening"
+      },
+      {
+        "prompt": "Cache the product listing to cut p95 latency after profiling it",
+        "owner": "performance-optimization"
+      },
+      {
+        "prompt": "Design the REST resource names and error format for the new orders API",
+        "owner": "api-and-interface-design"
+      }
+    ]
+  },
+  "evals": [
+    {
+      "id": 1,
+      "kind": "execution",
+      "prompt": "Implement the feature described in FEATURE.md.",
+      "expected_output": "Tenancy model identified from the code as shared schema scoped by orgId, new service methods built on the existing scoped repository, a cache key and a nightly job that stay inside each organization, and two-organization tests that prove isolation, with the full suite passing",
+      "files": [
+        "multi-tenant-architecture"
+      ],
+      "expectations": [
+        "Before editing, the agent states that the application is multi-tenant and identifies the model as a shared schema scoped by orgId, citing the resolver, the async context, or the scoped repository as evidence",
+        "getInvoice and outstandingTotal read data through scopedRepository or an equivalent filter on the current orgId, not by reading db.invoices directly without the orgId check",
+        "The cache key used for outstandingTotal includes the current organization ID, so two organizations never share a cached total",
+        "The mark-overdue job iterates organizations explicitly and runs each organization's updates inside runAsOrganization or with an explicit orgId scope, rather than updating all invoices with no organization context",
+        "New tests create at least two organizations and assert that getInvoice with another organization's invoice ID returns nothing, and that one organization's outstanding total excludes the other organization's invoices even when the cache is warm",
+        "The full suite is run with npm test after the change and passes"
+      ]
+    }
+  ]
+}

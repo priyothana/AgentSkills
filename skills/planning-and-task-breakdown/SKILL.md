@@ -29,6 +29,9 @@ Before writing any code, operate in read-only mode:
 - Identify existing patterns and conventions
 - Map dependencies between components
 - Note risks and unknowns
+- Triage cross-cutting concerns (below)
+
+**Triage cross-cutting concerns before assigning any task.** Run the nine questions in `using-agent-skills` (Cross-Cutting Concern Triage) against the spec and the code. The questions cover tenancy and tenant boundaries, frontend routing, localization, frontend state, backend layering, authorization, seed data, and data scripts. Record every answer with its evidence in the plan's Cross-Cutting Concerns section. A "yes" activates the matching skill; a "no" or unanswerable question activates nothing. Unanswerable questions go under Open Questions. The triage decides which skills each task carries in Step 4, so it comes first. Otherwise a task can be assigned without the concern that should have shaped it, such as a new endpoint planned with no permission check.
 
 **Do NOT write code during planning.** The output is a plan document saved to `tasks/plan.md` and a task list recorded in the task list target (see Output Files; default `tasks/todo.md`), not implementation.
 
@@ -95,6 +98,8 @@ Each task follows this structure, whether it lands in the markdown task list or 
 - [ ] Manual check: [description of what to verify]
 
 **Dependencies:** [Task numbers this depends on, or "None"]
+
+**Skills:** [Cross-cutting skills the triage activated for *this* task's change, or "None"]
 
 **Files likely touched:**
 - `src/path/to/file.ts`
@@ -175,6 +180,10 @@ When using an external tracker, note it in `tasks/plan.md` (e.g. "Tasks tracked 
 - [Key decision 1 and rationale]
 - [Key decision 2 and rationale]
 
+## Cross-Cutting Concerns
+[The triage from using-agent-skills: all nine questions, each with yes/no and its evidence]
+Activated: [skills answered "yes", or "None"]
+
 ## Task List
 
 ### Phase 1: Foundation
@@ -226,6 +235,8 @@ When multiple agents or sessions are available:
 | "The tasks are obvious" | Write them down anyway. Explicit tasks surface hidden dependencies and forgotten edge cases. |
 | "Planning is overhead" | Planning is the task. Implementation without a plan is just typing. |
 | "I can hold it all in my head" | Context windows are finite. Written plans survive session boundaries and compaction. |
+| "This is a small feature, the cross-cutting questions don't apply" | Small features are where a missing permission check or tenant filter slips through. The nine questions take a minute, and most answers are a quick "no" with a reason. |
+| "Attach every concern skill to every task, to be safe" | Irrelevant skills crowd the context and push the agent to build tenancy, i18n, or RBAC the change never needed. Activate only what the triage answers "yes". |
 | "The old `tasks/plan.md` is stale, I'll just replace it" | Unchecked tasks may be mid-build in another session. Overwriting them destroys work state that exists nowhere else. Stop and ask. |
 
 ## Red Flags
@@ -238,6 +249,8 @@ When multiple agents or sessions are available:
 - All tasks are XL-sized
 - No checkpoints between tasks
 - Dependency order isn't considered
+- Tasks assigned before the cross-cutting triage was recorded
+- Every task lists every concern skill, or a skill appears with no "yes" answer backing it
 
 ## Verification
 
@@ -246,6 +259,7 @@ Before starting implementation, confirm:
 - [ ] Every task has acceptance criteria
 - [ ] Every task has a verification step
 - [ ] Task dependencies are identified and ordered correctly
+- [ ] The cross-cutting triage answers all nine questions with evidence, and each task's Skills field lists only skills the triage activated for that task
 - [ ] Tasks are recorded in the task list target (default `tasks/todo.md`)
 - [ ] No pre-existing incomplete plan was overwritten without explicit user confirmation
 - [ ] No task touches more than ~5 files

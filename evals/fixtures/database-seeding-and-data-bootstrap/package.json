@@ -1,0 +1,8 @@
+{
+  "name": "billing-app",
+  "private": true,
+  "scripts": {
+    "test": "node --test",
+    "seed": "node scripts/seed.js"
+  }
+}

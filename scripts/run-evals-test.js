@@ -8,7 +8,15 @@ const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const test = require('node:test');
-const { materializeWorkspace, parseGrading, clearGradingSlot, persistGradingOutcome, extractExecutorModel } = require('./run-evals');
+const {
+  materializeWorkspace,
+  parseGrading,
+  clearGradingSlot,
+  persistGradingOutcome,
+  extractExecutorModel,
+  parseActivatedSkills,
+  checkActivation,
+} = require('./run-evals');
 
 const RUNNER = path.join(__dirname, 'run-evals.js');
 
@@ -619,5 +627,154 @@ test('materializes a git baseline and applies a working-tree patch', () => {
     assert.equal(fs.existsSync(path.join(workspace, '.eval')), false);
   } finally {
     fs.rmSync(workspace, { recursive: true, force: true });
+  }
+});
+
+// ---------- orchestration activation ----------
+
+function writeTriageSandbox(activation) {
+  const root = makeSandbox();
+  writeSkill(root, 'alpha-skill', 'Handles alpha widgets. Use when changing alpha widgets.');
+  writeSkill(root, 'beta-skill', 'Handles beta gadgets. Use when changing beta gadgets.');
+  writeSkill(root, 'using-agent-skills', 'Routes work to skills. Use when choosing which skill applies.');
+  fs.appendFileSync(
+    path.join(root, 'skills', 'using-agent-skills', 'SKILL.md'),
+    [
+      '## Cross-Cutting Concern Triage',
+      '',
+      '| # | Question | "Yes" when | Activates |',
+      '|---|----------|-----------|-----------|',
+      '| 1 | Alpha? | alpha widgets change | `alpha-skill` |',
+      '| 2 | Beta? | beta gadgets change | `beta-skill` |',
+      '',
+      '## Next Section',
+      '',
+    ].join('\n'),
+  );
+  writeJson(path.join(root, 'evals', 'cases', 'alpha-skill.json'), completeCase('alpha-skill', 'change alpha widget'));
+  writeJson(path.join(root, 'evals', 'cases', 'beta-skill.json'), completeCase('beta-skill', 'change beta gadget'));
+  const routing = completeCase('using-agent-skills', 'route choose which skill applies');
+  routing.evals = [{ ...behavioralEval(), activation }];
+  writeJson(path.join(root, 'evals', 'cases', 'using-agent-skills.json'), routing);
+  return root;
+}
+
+test('accepts an activation block that classifies every concern skill', () => {
+  const root = writeTriageSandbox({ activate: ['alpha-skill'], not_activate: ['beta-skill'] });
+
+  const result = run(root);
+
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+});
+
+test('rejects an activation block that leaves a concern skill unclassified', () => {
+  const root = writeTriageSandbox({ activate: ['alpha-skill'], not_activate: ['using-agent-skills'] });
+
+  const result = run(root);
+
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stdout, /concern skill "beta-skill" is not classified/);
+});
+
+test('rejects a skill listed in two activation lists', () => {
+  const root = writeTriageSandbox({ activate: ['alpha-skill'], not_activate: ['beta-skill'], optional: ['beta-skill'] });
+
+  const result = run(root);
+
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stdout, /"beta-skill" is listed in both activation\.not_activate and activation\.optional/);
+});
+
+test('rejects unknown skills and an empty not_activate list', () => {
+  const root = writeTriageSandbox({ activate: ['alpha-skill', 'beta-skill', 'ghost-skill'], not_activate: [] });
+
+  const result = run(root);
+
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stdout, /activation\.activate names unknown skill "ghost-skill"/);
+  assert.match(result.stdout, /activation\.not_activate must name at least one skill/);
+});
+
+test('rejects activation checks on dialogue evals', () => {
+  const root = writeTriageSandbox({ activate: ['alpha-skill'], not_activate: ['beta-skill'] });
+  const file = path.join(root, 'evals', 'cases', 'using-agent-skills.json');
+  const routing = JSON.parse(fs.readFileSync(file, 'utf8'));
+  routing.evals[0].kind = 'dialogue';
+  writeJson(file, routing);
+
+  const result = run(root);
+
+  assert.equal(result.status, 1, result.stdout + result.stderr);
+  assert.match(result.stdout, /activation checks need an execution eval/);
+});
+
+const KNOWN = new Set(['alpha-skill', 'beta-skill', 'gamma-skill']);
+
+test('parses the ACTIVATED line and its indented continuation', () => {
+  const triage = [
+    '1 Alpha: yes → alpha-skill',
+    '2 Beta:  no:  not-a-skill mentioned in a reason',
+    'ACTIVATED: alpha-skill,',
+    '           gamma-skill',
+    'beta-skill appears after the block and is ignored',
+  ].join('\n');
+
+  assert.deepEqual(parseActivatedSkills(triage, KNOWN), ['alpha-skill', 'gamma-skill']);
+});
+
+test('parses markdown-emphasized and empty ACTIVATED lines', () => {
+  assert.deepEqual(parseActivatedSkills('**ACTIVATED:** `beta-skill`', KNOWN), ['beta-skill']);
+  assert.deepEqual(parseActivatedSkills('ACTIVATED: none', KNOWN), []);
+  assert.equal(parseActivatedSkills('no triage summary here', KNOWN), null);
+});
+
+function triageWorkspace(content) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-skills-triage-test-'));
+  if (content !== undefined) fs.writeFileSync(path.join(dir, 'TRIAGE.md'), content);
+  return dir;
+}
+
+test('activation check passes when required skills are present and irrelevant ones absent', () => {
+  const dir = triageWorkspace('ACTIVATED: alpha-skill, gamma-skill');
+  try {
+    const result = checkActivation(dir, { activate: ['alpha-skill'], not_activate: ['beta-skill'], optional: ['gamma-skill'] }, KNOWN);
+    assert.equal(result.passed, true);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('activation check fails on an irrelevant skill even when required ones are present', () => {
+  const dir = triageWorkspace('ACTIVATED: alpha-skill, beta-skill');
+  try {
+    const result = checkActivation(dir, { activate: ['alpha-skill'], not_activate: ['beta-skill'] }, KNOWN);
+    assert.equal(result.passed, false);
+    assert.deepEqual(result.unexpected, ['beta-skill']);
+    assert.deepEqual(result.missing, []);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('activation check fails on a missing required skill', () => {
+  const dir = triageWorkspace('ACTIVATED: none');
+  try {
+    const result = checkActivation(dir, { activate: ['alpha-skill'], not_activate: ['beta-skill'] }, KNOWN);
+    assert.equal(result.passed, false);
+    assert.deepEqual(result.missing, ['alpha-skill']);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('activation check fails when TRIAGE.md is absent or has no ACTIVATED line', () => {
+  const absent = triageWorkspace();
+  const noLine = triageWorkspace('1 Alpha: yes');
+  try {
+    assert.match(checkActivation(absent, { activate: [], not_activate: ['beta-skill'] }, KNOWN).error, /found 0/);
+    assert.match(checkActivation(noLine, { activate: [], not_activate: ['beta-skill'] }, KNOWN).error, /no ACTIVATED: line/);
+  } finally {
+    fs.rmSync(absent, { recursive: true, force: true });
+    fs.rmSync(noLine, { recursive: true, force: true });
   }
 });

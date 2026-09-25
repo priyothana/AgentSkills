@@ -1,0 +1,15 @@
+{
+  "name": "invoicing-api",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node src/app.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^6.9.14",
+    "pg": "^8.12.0"
+  }
+}

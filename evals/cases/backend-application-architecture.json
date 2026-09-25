@@ -1,0 +1,52 @@
+{
+  "skill_name": "backend-application-architecture",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "Our Express controllers are full of SQL and business rules, move them into services and repositories",
+        "top_k": 3
+      },
+      {
+        "prompt": "Where should the transaction go when a use case writes to two tables?",
+        "top_k": 3
+      },
+      {
+        "prompt": "Add a new endpoint to our Spring Boot app following the controller, service, repository layering",
+        "top_k": 3
+      },
+      {
+        "prompt": "Set up dependency injection so the Go handlers stop building their own database clients",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "Design the REST resource names, status codes, and pagination for the public orders API",
+        "owner": "api-and-interface-design"
+      },
+      {
+        "prompt": "Profile the slow checkout endpoint and fix the N+1 query",
+        "owner": "performance-optimization"
+      }
+    ]
+  },
+  "evals": [
+    {
+      "id": 1,
+      "kind": "execution",
+      "prompt": "Implement the feature described in FEATURE.md.",
+      "expected_output": "A cancel endpoint whose handler only parses input and calls one service method, with the pending-only rule and stock release in the service inside one transaction, data access through the repositories, the domain error mapped by the existing toResponse, and tests at the service and endpoint level",
+      "files": [
+        "backend-application-architecture"
+      ],
+      "expectations": [
+        "The cancel handler parses the id, calls a single service method, and returns the response; it contains no direct access to db.data and no business rule about order status",
+        "The rule that only pending orders can be cancelled is enforced in the order service and raises a domain error such as ConflictError, not an HTTP status set inside the service",
+        "The order update and the stock release run inside one db.transaction call in the service, using the order and stock repositories rather than touching db.data from the service",
+        "Error-to-status mapping for the new cases goes through the existing toResponse function rather than new status codes chosen inside the handler",
+        "Tests cover cancelling a pending order (status and stock restored), cancelling a shipped or already cancelled order (409), and an unknown order (404)",
+        "The full suite is run with npm test after the change and passes"
+      ]
+    }
+  ]
+}

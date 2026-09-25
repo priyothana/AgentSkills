@@ -80,7 +80,7 @@ The rules below are the workflow; a concrete implementation of each lives in [re
 
 - Parameterize every query. Never build SQL, NoSQL, or shell commands from input strings.
 - Encode output through the framework's auto-escaping. If raw HTML is unavoidable, sanitize with an allowlist sanitizer first.
-- Check **authorization** on every request, not just authentication: the authenticated user must own, or be permitted on, the specific resource (A01, IDOR).
+- Check **authorization** on every request, not just authentication: the authenticated user must own, or be permitted on, the specific resource (A01, IDOR). Designing roles and permissions, and where they are enforced, is covered by `application-rbac-and-authorization`.
 
 Patterns: [Injection](references/hardening-patterns.md#injection), [XSS](references/hardening-patterns.md#cross-site-scripting-xss), [Access control](references/hardening-patterns.md#broken-access-control).
 

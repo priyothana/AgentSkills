@@ -1,0 +1,8 @@
+{
+  "common": { "loading": "Loading…" },
+  "login": { "title": "Sign in", "continue": "Continue with SSO" },
+  "projects": { "title": "Projects", "loadFailed": "Projects could not be loaded." },
+  "project": { "createdOn": "Created on {{date}}", "loadFailed": "This project could not be loaded." },
+  "plans": { "free": "Free", "pro": "Pro" },
+  "notFound": { "title": "Page not found", "home": "Back to projects" }
+}

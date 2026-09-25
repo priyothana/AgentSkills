@@ -1,0 +1,52 @@
+{
+  "skill_name": "application-rbac-and-authorization",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "Add role-based access control with viewer, editor, and admin roles to our app",
+        "top_k": 3
+      },
+      {
+        "prompt": "The delete button is hidden for non-admins but the API still lets anyone delete, fix the authorization",
+        "top_k": 3
+      },
+      {
+        "prompt": "Make sure an admin can't promote themselves to owner when changing member roles",
+        "top_k": 3
+      },
+      {
+        "prompt": "Write tests that check every role against every permission in our access matrix",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "Hash passwords with argon2 and add rate limiting to the login endpoint",
+        "owner": "security-and-hardening"
+      },
+      {
+        "prompt": "Resolve which tenant a request belongs to from the subdomain and isolate its data",
+        "owner": "multi-tenant-architecture"
+      }
+    ]
+  },
+  "evals": [
+    {
+      "id": 1,
+      "kind": "execution",
+      "prompt": "Implement the feature described in FEATURE.md.",
+      "expected_output": "Project deletion and role changes added as permissions in the existing matrix and enforced in the services, UI visibility driven by the same permissions, role changes that cannot escalate privilege, and table-driven role tests",
+      "files": [
+        "application-rbac-and-authorization"
+      ],
+      "expectations": [
+        "A new permission such as project:delete is added to ROLE_PERMISSIONS for admin and owner only, and deleteProject calls authorize with it in the service, rather than relying on the UI or a role-name comparison",
+        "changeRole is authorized with a dedicated permission or rule in the service, and refuses assigning a role more privileged than the actor's own role, and refuses actors changing their own role",
+        "changeRole refuses a role name that is not in ROLES, and prevents removing or demoting the last owner",
+        "The UI changes decide visibility from the same permission check (for example can()) rather than new hard-coded role-name lists",
+        "Tests call the service operations as each of viewer, editor, admin, and owner and assert allowed or ForbiddenError according to the matrix, including an escalation attempt such as an admin granting owner",
+        "The full suite is run with npm test after the change and passes"
+      ]
+    }
+  ]
+}
