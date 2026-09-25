@@ -21,7 +21,7 @@ Skills encode the workflows, quality gates, and best practices that senior engin
 
 ## Commands
 
-9 slash commands that map to the development lifecycle. Each one activates the right skills automatically.
+10 slash commands that map to the development lifecycle. Each one activates the right skills automatically.
 
 | What you're doing | Command | Key principle |
 |-------------------|---------|---------------|
@@ -34,8 +34,11 @@ Skills encode the workflows, quality gates, and best practices that senior engin
 | Audit web performance | `/webperf` | Measure before you optimize |
 | Simplify the code | `/code-simplify` | Clarity over cleverness |
 | Ship to production | `/ship` | Faster is safer |
+| Run a request end to end, autonomously | `/autopilot` | Classify → plan → build → test → review → ship, with feedback loops |
 
 Want fewer manual steps once the spec exists? **`/build auto`** generates the plan and implements every task in a single approved pass — you approve the plan once, then it runs autonomously. It removes the human stepping *between* tasks, not the verification: every task is still test-driven and committed individually, and it pauses on failures or risky steps.
+
+Want the whole lifecycle driven for you? Paste a raw user story or bug report with no command named, or run **`/autopilot`** explicitly — the `orchestrator` persona classifies the request, sequences the specialist personas it needs (see [Agent Personas](#agent-personas) below), and routes Developer → Review → QA feedback loops automatically until every quality gate passes. See [AGENTS.md](AGENTS.md#autonomous-orchestration-mode) and [workflows/README.md](workflows/README.md) for the full mechanics and worked examples.
 
 Skills also activate automatically based on what you're doing — designing an API triggers `api-and-interface-design`, building UI triggers `frontend-ui-engineering`, and so on.
 
@@ -46,7 +49,7 @@ Skills also activate automatically based on what you're doing — designing an A
 **Fastest path — any agent, one command.** The open [skills CLI](https://github.com/vercel-labs/skills) installs into 70+ agents (Claude Code, Cursor, Codex, Copilot, Cline, and more):
 
 ```bash
-npx skills add addyosmani/agent-skills            # install all 33 skills
+npx skills add addyosmani/agent-skills            # install all 26 skills
 npx skills add addyosmani/agent-skills --list     # browse before installing
 ```
 
@@ -219,9 +222,9 @@ Already installed? How you roll the pack out depends on your codebase. The **[Ad
 
 ---
 
-## All 33 Skills
+## All 26 Skills
 
-The commands above are entry points. The pack includes 33 skills total — 32 lifecycle skills plus the `using-agent-skills` meta-skill. Each skill is a structured workflow with steps, verification gates, and anti-rationalization tables. You can also reference any skill directly.
+The commands above are entry points. The pack includes 26 skills total — 24 lifecycle skills, the `using-agent-skills` meta-skill, and `autonomous-orchestration`. Each skill is a structured workflow with steps, verification gates, and anti-rationalization tables. You can also reference any skill directly.
 
 ### Meta - Discover which skill applies
 
@@ -291,18 +294,36 @@ The commands above are entry points. The pack includes 33 skills total — 32 li
 | [observability-and-instrumentation](skills/observability-and-instrumentation/SKILL.md) | Structured logging, RED metrics, OpenTelemetry tracing, symptom-based alerting - instrument as you build | Adding telemetry, or shipping anything that runs in production |
 | [shipping-and-launch](skills/shipping-and-launch/SKILL.md) | Pre-launch checklists, feature flag lifecycle, staged rollouts, rollback procedures, monitoring setup | Preparing to deploy to production |
 
+### Orchestrate - Drive the whole lifecycle autonomously
+
+| Skill | What It Does | Use When |
+|-------|-------------|----------|
+| [autonomous-orchestration](skills/autonomous-orchestration/SKILL.md) | Classify a raw request, plan a staged sequence across specialist personas, and drive Developer → Review → QA feedback loops with bounded retries and escalation | A user story or bug report arrives with no persona or command named and should run end to end |
+
 ---
 
 ## Agent Personas
 
-Pre-configured specialist personas for targeted reviews:
+Pre-configured specialist personas, spanning the full team from planning to deployment. `orchestrator` is the one persona allowed to sequence the others — every other persona here plays a single role and reports back to whichever slash command or the `orchestrator` dispatched it (see [docs/agents.md](docs/agents.md) for the composition rules):
 
 | Agent | Role | Perspective |
 |-------|------|-------------|
+| [orchestrator](agents/orchestrator.md) | Top-level planner & workflow manager | Classifies a raw request, plans the stage sequence, and drives feedback loops to completion; run it via `/autopilot` |
+| [requirements-agent](agents/requirements-agent.md) | Requirements Engineer | Turns an informal request into testable functional/non-functional requirements |
+| [product-manager](agents/product-manager.md) | Product / Project Manager | Acceptance criteria, prioritization, and scope tradeoffs |
+| [architecture-agent](agents/architecture-agent.md) | Systems Architect | Component boundaries, interfaces, data-model impact, tradeoffs |
+| [backend-developer](agents/backend-developer.md) | Backend Engineer | Server-side implementation, incremental and test-first |
+| [frontend-developer](agents/frontend-developer.md) | Frontend Engineer | UI implementation covering the full state matrix and accessibility defaults |
+| [database-agent](agents/database-agent.md) | Database Engineer | Schema design, migrations, and query-pattern review |
+| [developer](agents/developer.md) | General / full-stack Engineer | Small, cross-cutting implementation work that doesn't need a specialist lens |
+| [tech-lead](agents/tech-lead.md) | Team Lead / Tech Lead | Resolves stalled feedback loops and cross-persona disagreements |
+| [debugger](agents/debugger.md) | Root-cause investigator | Reproduces bugs, isolates root cause, hands off a failing test |
 | [code-reviewer](agents/code-reviewer.md) | Senior Staff Engineer | Five-axis code review with "would a staff engineer approve this?" standard |
 | [test-engineer](agents/test-engineer.md) | QA Specialist | Test strategy, coverage analysis, and the Prove-It pattern |
 | [security-auditor](agents/security-auditor.md) | Security Engineer | Vulnerability detection, threat modeling, OWASP assessment |
+| [performance-agent](agents/performance-agent.md) | Performance Engineer | Backend/algorithmic performance, profiling, and scalability review |
 | [web-performance-auditor](agents/web-performance-auditor.md) | Web Performance Engineer | Core Web Vitals audit with Quick/Deep modes and a metric-honesty rule; run it via `/webperf` |
+| [deployment-agent](agents/deployment-agent.md) | Release Engineer | Verifies quality gate evidence, writes the rollout/rollback plan, issues go/no-go |
 
 See [docs/agents.md](docs/agents.md) for the decision matrix, orchestration rules, and how personas compose with skills and slash commands.
 
@@ -361,14 +382,14 @@ The portable core stays in shared directories. Host-specific paths are native di
 
 | Layer / consumer | Repository paths | Purpose |
 |---|---|---|
-| Shared workflow core | `skills/` (33 skills) | Portable `SKILL.md` workflows used by every integration |
-| Shared review material | `agents/` (4 personas), `references/` (7 checklists) | Specialist reviewers and pack-level checklists carried by whole-repo installs |
-| Claude Code adapter | `.claude/commands/` (9 commands), `.claude-plugin/`, `hooks/` | Slash-command wrappers, marketplace metadata, and lifecycle hooks |
-| Gemini CLI adapter | `.gemini/commands/` (9 commands) | Gemini-native TOML command wrappers |
-| Antigravity CLI adapter | `commands/` (9 commands), `plugin.json` | Legacy TOML wrappers and the root plugin manifest; see the [known wrapper limitation](docs/antigravity-setup.md#lifecycle-workflows-and-command-compatibility) |
+| Shared workflow core | `skills/` (26 skills) | Portable `SKILL.md` workflows used by every integration |
+| Shared review material | `agents/` (16 personas), `references/` (7 checklists), `workflows/` (orchestrator routing table, state machine, state schema) | Specialist reviewers, the autonomous-orchestration engine, and pack-level checklists carried by whole-repo installs |
+| Claude Code adapter | `.claude/commands/` (10 commands), `.claude-plugin/`, `hooks/` | Slash-command wrappers, marketplace metadata, and lifecycle hooks |
+| Gemini CLI adapter | `.gemini/commands/` (10 commands) | Gemini-native TOML command wrappers |
+| Antigravity CLI adapter | `commands/` (10 commands), `plugin.json` | Legacy TOML wrappers and the root plugin manifest; see the [known wrapper limitation](docs/antigravity-setup.md#lifecycle-workflows-and-command-compatibility) |
 | Codex adapter | `.codex-plugin/`, `.agents/plugins/` | Codex plugin metadata and marketplace registration; Codex consumes `skills/` directly |
 | GitHub Copilot CLI adapter | `plugin.json` | Root plugin metadata; Copilot CLI discovers `skills/` by convention and does not register the lifecycle wrappers |
-| Contributor tooling | `scripts/` (13 scripts), `evals/` (25 case files), `.github/workflows/` | Validation, routing evals, and CI |
+| Contributor tooling | `scripts/` (13 scripts), `evals/` (26 case files), `.github/workflows/` | Validation, routing evals, and CI |
 | Documentation | `docs/` | Universal guidance and per-tool setup guides |
 
 Tools without a checked-in adapter directory install or copy the shared `skills/` core into their own native location. The [Quick Start](#quick-start) links the setup guide for each supported host.

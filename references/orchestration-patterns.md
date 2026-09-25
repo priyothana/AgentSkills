@@ -4,6 +4,8 @@ Reference catalog of agent orchestration patterns this repo endorses, plus anti-
 
 The governing rule: **the user (or a slash command) is the orchestrator. Personas do not invoke other personas.** Skills are mandatory hops inside a persona's workflow.
 
+> **One named exception:** the `orchestrator` persona. Pattern 6 below and [docs/agents.md#autonomous-orchestration-the-one-exception](../docs/agents.md#autonomous-orchestration-the-one-exception) describe it in full, including exactly which of the anti-patterns further down this page it overrides and why. Every other persona in `agents/` still follows the governing rule as written — this is not a general loosening.
+
 ---
 
 ## Endorsed patterns
@@ -111,6 +113,44 @@ main agent → research sub-agent (reads 50 files) → digest → main agent con
 **Cost:** one isolated sub-agent context. Worth it any time the alternative is loading hundreds of files into the main context.
 
 **On Claude Code, use the built-in `Explore` subagent** rather than defining a custom research persona. `Explore` runs on Haiku, is denied write/edit tools, and is purpose-built for this pattern. Define a custom research subagent only when `Explore` doesn't fit (e.g. you need a domain-specific system prompt the model wouldn't infer).
+
+---
+
+### 6. Autonomous sequential orchestration with feedback loops
+
+The `orchestrator` persona classifies a raw request, builds a staged plan, and dispatches specialist personas one stage at a time (or in parallel where a stage's sub-tasks are independent), routing REQUEST CHANGES / bug-found verdicts back to the originating developer persona until Review and QA both sign off — all tracked in a persisted `workflow-state.json`, all bounded by a loop limit that escalates to `tech-lead` instead of retrying forever.
+
+```
+raw request → orchestrator (classify, plan)
+                  │
+                  ▼
+        dispatch stage persona ◄──┐
+                  │               │ REQUEST CHANGES / bug found
+                  ▼               │ (loop count < 3)
+           exit condition met? ───┘
+                  │ yes
+                  ▼
+           more stages? ──yes──► dispatch next stage
+                  │ no
+                  ▼
+        all gates passed → deployment-agent (after human checkpoint, by default)
+```
+
+**Use when:** the request is a raw user story or bug report with no persona or command named, and the user wants it driven end to end without naming each step.
+
+**Examples in this repo:** `/autopilot`.
+
+**Cost:** one turn per stage dispatch, plus loop retries up to the limit — the highest-cost pattern in this catalog, deliberately, because it replaces a whole manual pipeline rather than one step of it.
+
+**This is the one pattern in this catalog where a persona (not a slash command or the user) holds composition authority across turns.** It exists as a named, bounded exception to Anti-patterns A and C below — see [docs/agents.md#autonomous-orchestration-the-one-exception](../docs/agents.md#autonomous-orchestration-the-one-exception) for exactly what's overridden and what mitigates each of those anti-patterns' original objections. Do not generalize this pattern by giving another persona the same composition authority — `orchestrator` is the only one, and orchestration depth under it is still capped at 1.
+
+**Validation checklist before adding a second use of this pattern to the catalog:**
+- [ ] Does it genuinely need multi-stage, conditional, looping composition — not just parallel fan-out (Pattern 3) or a sequence a human is fine driving (Pattern 4)?
+- [ ] Is there a persisted state file recording every stage transition, not just an agent's running summary?
+- [ ] Is there a bounded loop limit with a real escalation path?
+- [ ] Is there a human checkpoint before the irreversible step, unless the project explicitly opted out?
+
+If any answer is "no," this is Anti-pattern A or C wearing this pattern's name, not a real instance of it.
 
 ---
 
@@ -297,6 +337,8 @@ A persona whose job is to decide which other persona to call.
 
 **What to do instead:** add or refine slash commands. Document intent → command mapping in `AGENTS.md`.
 
+**The named exception:** `orchestrator` (Pattern 6) is exactly this shape, deliberately, with mitigations for each objection above — see [docs/agents.md#autonomous-orchestration-the-one-exception](../docs/agents.md#autonomous-orchestration-the-one-exception). Do not read that exception as license for a second router persona; it covers `orchestrator` alone.
+
 ---
 
 ### B. Persona that calls another persona
@@ -324,6 +366,8 @@ An agent that calls `/spec`, then `/plan`, then `/build`, etc. on the user's beh
 - Removes user agency at exactly the points where judgment matters most
 
 **What to do instead:** keep the user as the orchestrator. Document the recommended sequence in `README.md` and let users invoke it.
+
+**The named exception:** `orchestrator` (Pattern 6) automates exactly this hand-off, with a persisted state file in place of per-step paraphrasing, a bounded loop limit in place of unbounded retries, and a human checkpoint restored before the one irreversible step (Ship) by default. See [docs/agents.md#autonomous-orchestration-the-one-exception](../docs/agents.md#autonomous-orchestration-the-one-exception) for the full accounting of what's mitigated and what isn't.
 
 ---
 

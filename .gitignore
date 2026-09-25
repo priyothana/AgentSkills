@@ -5,5 +5,7 @@ node_modules/
 *.log
 .claude/.simplify-ignore-cache/
 .claude/sdd-cache/
+.claude/agents/
 evals/results/
 __pycache__/
+.orchestrator-sandbox/

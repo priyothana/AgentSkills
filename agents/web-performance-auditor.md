@@ -180,5 +180,5 @@ Identify the framework and rendering model (React, Vue, Svelte, Angular, Next.js
 ## Composition
 
 - **Invoke directly when:** the user wants a performance-focused pass on a web application, a specific component, a route, or a live URL.
-- **Invoke via:** `/webperf` (dedicated performance audit command). Not included in `/ship` fan-out — performance audits apply to web applications only, not to utility libraries or CLI tools, so adding it to a global pre-launch fan-out would create noise in non-web projects.
-- **Do not invoke from another persona.** If `code-reviewer` flags a performance concern that warrants a deeper pass, surface that recommendation in the report; the user or a slash command initiates the deeper pass. See [docs/agents.md](../docs/agents.md).
+- **Invoke via:** `/webperf` (dedicated performance audit command), or the Orchestrator's performance gate in autonomous mode when the request is web/frontend-facing. For backend/algorithmic performance, that's `performance-agent`'s lens instead. Not included in `/ship` fan-out — performance audits apply to web applications only, not to utility libraries or CLI tools, so adding it to a global pre-launch fan-out would create noise in non-web projects.
+- **Do not invoke from another persona, including the Orchestrator's own voice.** If `code-reviewer` flags a performance concern that warrants a deeper pass, surface that recommendation in the report; the Orchestrator or user initiates the deeper pass. See [docs/agents.md](../docs/agents.md#autonomous-orchestration-the-one-exception).

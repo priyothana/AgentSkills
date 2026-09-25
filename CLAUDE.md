@@ -8,9 +8,10 @@ This is the agent-skills project — a collection of production-grade engineerin
 
 ```
 skills/       → Core skills (SKILL.md per directory)
-agents/       → Reusable agent personas (code-reviewer, test-engineer, security-auditor, web-performance-auditor)
+agents/       → Reusable agent personas (orchestrator, requirements-agent, product-manager, architecture-agent, backend-developer, frontend-developer, database-agent, developer, tech-lead, debugger, code-reviewer, test-engineer, security-auditor, performance-agent, web-performance-auditor, deployment-agent)
 hooks/        → Session lifecycle hooks
-.claude/commands/ → Slash commands (/spec, /plan, /build, /test, /review, /code-simplify, /ship; plus /webperf specialist audit)
+.claude/commands/ → Slash commands (/spec, /plan, /build, /test, /review, /code-simplify, /ship, /autopilot; plus /webperf specialist audit)
+workflows/    → Orchestrator routing table, state machine, and workflow-state schema (autonomous mode)
 references/   → Supplementary checklists (testing, performance, security, accessibility, observability)
 evals/        → Skill eval cases + framework (see evals/README.md)
 docs/         → Setup guides for different tools
@@ -24,6 +25,8 @@ docs/         → Setup guides for different tools
 **Verify:** browser-testing-with-devtools, debugging-and-error-recovery
 **Review:** code-review-and-quality, code-simplification, security-and-hardening, performance-optimization
 **Ship:** git-workflow-and-versioning, ci-cd-and-automation, deprecation-and-migration, database-query-and-script-management, documentation-and-adrs, observability-and-instrumentation, shipping-and-launch
+**Ship:** git-workflow-and-versioning, ci-cd-and-automation, deprecation-and-migration, documentation-and-adrs, observability-and-instrumentation, shipping-and-launch
+**Orchestrate:** autonomous-orchestration (drives the full Define→Ship lifecycle across personas for a raw request; see [AGENTS.md](AGENTS.md#autonomous-orchestration-mode))
 
 ## Conventions
 

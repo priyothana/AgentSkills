@@ -1,0 +1,44 @@
+{
+  "skill_name": "autonomous-orchestration",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "Here's a raw user story: 'As a user, I want to export my invoices as CSV.' Run this end to end and ship it.",
+        "top_k": 3
+      },
+      {
+        "prompt": "Bug report: checkout hangs intermittently after the last release. Drive this to a fix autonomously, I don't want to name which agent handles what.",
+        "top_k": 3
+      },
+      {
+        "prompt": "Take this feature request and run the whole team on it without me picking personas or commands.",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "Review this PR for correctness and security issues.",
+        "owner": "code-review-and-quality"
+      },
+      {
+        "prompt": "Write unit tests for the checkout discount calculator.",
+        "owner": "test-driven-development"
+      }
+    ]
+  },
+  "evals": [
+    {
+      "id": 1,
+      "kind": "dialogue",
+      "prompt": "Raw user story: 'As a shopper, I want to save items to a wishlist.' No persona or command named — drive this autonomously end to end.",
+      "expected_output": "Classification as New Feature/User Story, a staged plan (requirements/product -> architecture -> build -> review -> QA -> ship), a workflow-state.json initialized and updated per stage, and a final report listing which gates passed with evidence pointers.",
+      "expectations": [
+        "Request is classified before any implementation work starts",
+        "A stage plan is produced naming which persona owns each stage",
+        "Workflow state is recorded/updated at each stage transition, not just summarized at the end",
+        "Review and QA both sign off before a deployment-agent stage is reached",
+        "If review or QA reject the work, the loop routes back to the originating developer persona with a structured report rather than the orchestrator fixing it directly"
+      ]
+    }
+  ]
+}
