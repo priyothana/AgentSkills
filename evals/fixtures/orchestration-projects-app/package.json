@@ -1,0 +1,8 @@
+{
+  "name": "projects",
+  "private": true,
+  "workspaces": ["server", "web"],
+  "scripts": {
+    "test": "npm test --workspaces"
+  }
+}

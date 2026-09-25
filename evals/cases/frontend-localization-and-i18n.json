@@ -1,0 +1,52 @@
+{
+  "skill_name": "frontend-localization-and-i18n",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "Add German and Japanese translations to our React app",
+        "top_k": 3
+      },
+      {
+        "prompt": "Prices show a dollar sign for every country, format currency for the user's locale",
+        "top_k": 3
+      },
+      {
+        "prompt": "Support Arabic with right-to-left layout in our Vue app",
+        "top_k": 3
+      },
+      {
+        "prompt": "Replace the hard-coded English strings in these components with translation keys",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "Make the settings page responsive and keyboard accessible",
+        "owner": "frontend-ui-engineering"
+      },
+      {
+        "prompt": "Add a /projects/:id route that redirects signed-out users to login",
+        "owner": "frontend-routing-and-navigation"
+      }
+    ]
+  },
+  "evals": [
+    {
+      "id": 1,
+      "kind": "execution",
+      "prompt": "Do the task described in TASK.md.",
+      "expected_output": "Cart summary strings moved to translation keys in en, de, and ar with locale plural rules, currency formatted with Intl using the cart's currency, dir=rtl for Arabic with logical CSS, and tests across locales",
+      "files": [
+        "frontend-localization-and-i18n"
+      ],
+      "expectations": [
+        "All user-facing text in the cart summary, including the aria-label, comes from translation keys present in en.json, de.json, and ar.json",
+        "Item-count wording uses locale plural rules (for example Intl.PluralRules or ICU plural categories) rather than count === 1, and Arabic has its additional plural categories",
+        "The total is formatted with Intl.NumberFormat (or an equivalent locale formatter) using the locale and cart.currency, with no hard-coded $ or toFixed",
+        "The Arabic rendering sets dir=\"rtl\" and lang, and the component's left-specific styles are replaced with logical equivalents such as text-align: start and padding-inline-start",
+        "Tests assert the rendered output in at least en and de including currency formatting, Arabic direction, and plural forms for more than one count",
+        "The full suite is run with npm test after the change and passes"
+      ]
+    }
+  ]
+}

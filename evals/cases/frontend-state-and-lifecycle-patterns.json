@@ -1,0 +1,52 @@
+{
+  "skill_name": "frontend-state-and-lifecycle-patterns",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "Search results show matches for an old query when typing fast, fix the race condition",
+        "top_k": 3
+      },
+      {
+        "prompt": "Fix the memory leak from event listeners that are never removed when the component unmounts",
+        "top_k": 3
+      },
+      {
+        "prompt": "My useEffect runs in an infinite loop",
+        "top_k": 3
+      },
+      {
+        "prompt": "Should this API data live in the Pinia store or stay in the component?",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "Build the settings page layout with accessible, responsive components",
+        "owner": "frontend-ui-engineering"
+      },
+      {
+        "prompt": "Add a 404 page and protected routes to the app",
+        "owner": "frontend-routing-and-navigation"
+      }
+    ]
+  },
+  "evals": [
+    {
+      "id": 1,
+      "kind": "execution",
+      "prompt": "Fix the bugs described in BUG.md.",
+      "expected_output": "Failing tests first for the race and the unmount leak, stale responses ignored or aborted, the catalog subscription and in-flight request cleaned up on unmount, empty and error states rendered, and the derived count no longer stored",
+      "files": [
+        "frontend-state-and-lifecycle-patterns"
+      ],
+      "expectations": [
+        "A test reproducing the stale-response race (an earlier query resolving after a later one) is added and shown failing before src/search-box.js is changed",
+        "Stale responses are cancelled with an abort signal or ignored by checking they match the latest query, so the rendered results always match the current query",
+        "onUnmount unsubscribes from catalogEvents using the returned unsubscribe function and cancels or ignores in-flight requests, and a test asserts no setState errors and no listeners after unmount",
+        "The component renders an empty state when there are no results and an error state when search rejects, with tests for both",
+        "The result count is derived from the results when rendering rather than stored separately in state",
+        "The full suite is run with npm test after the change and passes"
+      ]
+    }
+  ]
+}

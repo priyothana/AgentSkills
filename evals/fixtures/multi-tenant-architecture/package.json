@@ -1,0 +1,7 @@
+{
+  "name": "invoicing-service",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  }
+}

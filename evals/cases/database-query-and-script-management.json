@@ -1,0 +1,52 @@
+{
+  "skill_name": "database-query-and-script-management",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "Write a one-off script to delete duplicate invoices for one customer in production",
+        "top_k": 3
+      },
+      {
+        "prompt": "Review this UPDATE before ops runs it against the live database",
+        "top_k": 3
+      },
+      {
+        "prompt": "Backfill the new status column for existing rows in batches without locking the table",
+        "top_k": 3
+      },
+      {
+        "prompt": "How should we name, version, and document our SQL data fix scripts?",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "Make our seed script idempotent so it can run on every deploy",
+        "owner": "database-seeding-and-data-bootstrap"
+      },
+      {
+        "prompt": "Profile the slow orders page and add the missing index",
+        "owner": "performance-optimization"
+      }
+    ]
+  },
+  "evals": [
+    {
+      "id": 1,
+      "kind": "execution",
+      "prompt": "Handle the ticket in TICKET.md.",
+      "expected_output": "A new reviewed-ready SQL script named per the folder convention, with a header, a tenant-scoped preview of the duplicates, a backup of the rows to delete, handling of payments that reference duplicates, a transaction with a row-count guard, and a written rollback, without executing anything",
+      "files": [
+        "database-query-and-script-management"
+      ],
+      "expectations": [
+        "A new file in db/scripts is named with the date, OPS-214, and a short description, following the README convention, and starts with a header giving purpose, ticket, tenant scope, how to run it, and how to roll back",
+        "Every statement that reads or changes invoices filters on organization_id = 42",
+        "The script previews the duplicate rows and their count with the same predicate used by the delete, keeping the earliest-created row per invoice number (by created_at, with id as a tiebreaker)",
+        "Rows to be deleted are copied to a backup table or export before deletion, and payments that reference a duplicate are repointed to the kept invoice or the script stops, rather than being ignored",
+        "The delete runs inside a transaction and aborts or rolls back if the affected row count differs from the previewed count",
+        "The agent does not execute the script against any database, and states the expected row count must be confirmed from the preview before applying"
+      ]
+    }
+  ]
+}

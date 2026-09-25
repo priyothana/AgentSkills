@@ -1,0 +1,7 @@
+{
+  "name": "orders-service",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  }
+}

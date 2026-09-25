@@ -16,20 +16,28 @@ body:
       description: Which skill did not work as expected?
       options:
         - api-and-interface-design
+        - application-rbac-and-authorization
+        - backend-application-architecture
         - browser-testing-with-devtools
         - ci-cd-and-automation
         - code-review-and-quality
         - code-simplification
         - context-engineering
+        - database-query-and-script-management
+        - database-seeding-and-data-bootstrap
         - debugging-and-error-recovery
         - deprecation-and-migration
         - documentation-and-adrs
         - doubt-driven-development
+        - frontend-localization-and-i18n
+        - frontend-routing-and-navigation
+        - frontend-state-and-lifecycle-patterns
         - frontend-ui-engineering
         - git-workflow-and-versioning
         - idea-refine
         - incremental-implementation
         - interview-me
+        - multi-tenant-architecture
         - observability-and-instrumentation
         - performance-optimization
         - planning-and-task-breakdown

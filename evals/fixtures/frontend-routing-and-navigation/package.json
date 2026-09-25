@@ -1,0 +1,7 @@
+{
+  "name": "projects-web",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  }
+}

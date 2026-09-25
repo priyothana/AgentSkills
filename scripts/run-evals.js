@@ -57,6 +57,12 @@ const EVAL_KINDS = new Set(['execution', 'dialogue']);
 const COLLISION_WARN = 0.5; // cosine similarity between two descriptions
 const COLLISION_ERROR = 0.75;
 
+// Orchestration evals: an eval may declare which skills its triage must and
+// must not activate. The agent records the triage in TRIAGE.md, and Tier 3
+// checks its ACTIVATED: line against these lists without relying on the grader.
+const ACTIVATION_LISTS = ['activate', 'not_activate', 'optional'];
+const TRIAGE_FILE = 'TRIAGE.md';
+
 // ---------- tiny text pipeline ----------
 
 const STOP = new Set([
@@ -180,6 +186,92 @@ function loadCases() {
     });
 }
 
+// Concern skills are the ones the meta-skill's Cross-Cutting Concern Triage
+// table can activate (backticked names in its last column). Read from the
+// skill itself so a new triage question automatically requires every
+// orchestration eval to classify its skill.
+function loadConcernSkills() {
+  const file = path.join(SKILLS_DIR, 'using-agent-skills', 'SKILL.md');
+  if (!fs.existsSync(file)) return [];
+  const section = fs.readFileSync(file, 'utf8').split(/^## Cross-Cutting Concern Triage[ \t]*$/m)[1];
+  if (!section) return [];
+  const names = new Set();
+  for (const line of section.split(/^## /m)[0].split('\n')) {
+    if (!/^\|\s*\d+\s*\|/.test(line)) continue;
+    const cells = line.split('|').map((c) => c.trim()).filter(Boolean);
+    for (const m of cells[cells.length - 1].matchAll(/`([a-z0-9-]+)`/g)) names.add(m[1]);
+  }
+  return [...names];
+}
+
+function activationErrors(activation, kind, skillNames, concernSkills) {
+  if (activation === null || typeof activation !== 'object' || Array.isArray(activation)) {
+    return ['activation must be an object with activate, not_activate, and optional lists'];
+  }
+  const errs = [];
+  const unknown = Object.keys(activation).filter((k) => !ACTIVATION_LISTS.includes(k));
+  if (unknown.length) errs.push(`activation has unknown key(s): ${unknown.join(', ')}`);
+  if (kind !== 'execution') errs.push(`activation checks need an execution eval (${TRIAGE_FILE} is read from the workspace)`);
+  const seen = new Map();
+  for (const list of ACTIVATION_LISTS) {
+    const names = activation[list] === undefined ? [] : activation[list];
+    if (!Array.isArray(names) || !names.every((n) => typeof n === 'string')) {
+      errs.push(`activation.${list} must be an array of skill names`);
+      continue;
+    }
+    for (const n of names) {
+      if (!skillNames.has(n)) errs.push(`activation.${list} names unknown skill "${n}"`);
+      if (seen.has(n)) errs.push(`"${n}" is listed in both activation.${seen.get(n)} and activation.${list}`);
+      else seen.set(n, list);
+    }
+  }
+  if (!Array.isArray(activation.not_activate) || activation.not_activate.length === 0) {
+    errs.push('activation.not_activate must name at least one skill that must stay inactive');
+  }
+  for (const c of concernSkills) {
+    if (!seen.has(c)) errs.push(`concern skill "${c}" is not classified in activate, not_activate, or optional`);
+  }
+  return errs;
+}
+
+// Returns the skill names on the ACTIVATED: line (plus indented continuation
+// lines) of a recorded triage, or null when the triage has no such line.
+function parseActivatedSkills(text, skillNames) {
+  const lines = text.split(/\r?\n/);
+  const start = lines.findIndex((l) => /^[\s>*_`-]*ACTIVATED[\s*_`]*:/i.test(l));
+  if (start === -1) return null;
+  const block = [lines[start].replace(/^.*?ACTIVATED[\s*_`]*:/i, '')];
+  for (let i = start + 1; i < lines.length && /^\s+\S/.test(lines[i]); i++) block.push(lines[i]);
+  const found = block.join(' ').match(/[a-z0-9]+(?:-[a-z0-9]+)+/g) || [];
+  return [...new Set(found.filter((n) => skillNames.has(n)))];
+}
+
+function findTriageFiles(dir) {
+  const hits = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (entry.name === '.git' || entry.name === 'node_modules') continue;
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) hits.push(...findTriageFiles(full));
+    else if (entry.name === TRIAGE_FILE) hits.push(full);
+  }
+  return hits;
+}
+
+function checkActivation(workspace, activation, skillNames) {
+  const files = findTriageFiles(workspace);
+  if (files.length !== 1) {
+    return { passed: false, error: `expected exactly one ${TRIAGE_FILE} in the workspace, found ${files.length}` };
+  }
+  const triageFile = path.relative(workspace, files[0]);
+  const activated = parseActivatedSkills(fs.readFileSync(files[0], 'utf8'), skillNames);
+  if (activated === null) {
+    return { passed: false, triage_file: triageFile, error: `${triageFile} has no ACTIVATED: line` };
+  }
+  const missing = (activation.activate || []).filter((n) => !activated.includes(n));
+  const unexpected = (activation.not_activate || []).filter((n) => activated.includes(n));
+  return { passed: !missing.length && !unexpected.length, triage_file: triageFile, activated, missing, unexpected };
+}
+
 function resolveFixturePath(root, rel) {
   if (path.isAbsolute(rel)) {
     throw new Error(`fixture path must be relative: ${rel}`);
@@ -200,6 +292,7 @@ function runDeterministic(minRank1) {
   const cases = loadCases();
   const corpus = buildCorpus(skills);
   const skillNames = new Set(skills.map((s) => s.name));
+  const concernSkills = loadConcernSkills();
 
   let errors = 0;
   let warnings = 0;
@@ -281,6 +374,12 @@ function runDeterministic(minRank1) {
             console.log(`  ✗  ${c.file}: eval id=${ev.id} fixture not found: evals/fixtures/${rel}`);
             errors++;
           }
+        }
+      }
+      if (ev.activation !== undefined) {
+        for (const msg of activationErrors(ev.activation, kind, skillNames, concernSkills)) {
+          console.log(`  ✗  ${c.file}: eval id=${ev.id} ${msg}`);
+          errors++;
         }
       }
       if (fixtureRequired && ev.trust_level === 'provisional') {
@@ -523,6 +622,7 @@ function runBehavioral(skillName, dryRun) {
     process.exit(1);
   }
   if (!dryRun) fs.mkdirSync(RESULTS_DIR, { recursive: true });
+  const skillNames = new Set(loadSkills().map((s) => s.name));
   let failures = 0;
 
   for (const ev of d.evals) {
@@ -543,7 +643,8 @@ function runBehavioral(skillName, dryRun) {
       const artifact = kind === 'dialogue'
         ? 'dialogue transcript; no fixture required'
         : `execution trace in workspace + ${fixtures} fixture(s)`;
-      console.log(`[dry-run] eval ${ev.id}: ${artifact}; claude -p --verbose --output-format stream-json --permission-mode acceptEdits --allowedTools ${EXECUTOR_TOOLS} --append-system-prompt <${skillName}/SKILL.md> < prompt-on-stdin`);
+      const activationNote = ev.activation ? `; activation checked against ${TRIAGE_FILE}` : '';
+      console.log(`[dry-run] eval ${ev.id}: ${artifact}${activationNote}; claude -p --verbose --output-format stream-json --permission-mode acceptEdits --allowedTools ${EXECUTOR_TOOLS} --append-system-prompt <${skillName}/SKILL.md> < prompt-on-stdin`);
       continue;
     }
     const base = path.join(RESULTS_DIR, `${skillName}.eval-${ev.id}`);
@@ -567,6 +668,19 @@ function runBehavioral(skillName, dryRun) {
         '--append-system-prompt', `Follow this skill exactly:\n\n${fs.readFileSync(skillFile, 'utf8')}`],
       { input: ev.prompt, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, cwd: workspace, timeout: EXECUTOR_TIMEOUT_MS },
     );
+    // Deterministic, grader-independent: a required skill missing from the
+    // recorded ACTIVATED: line, or an irrelevant one present, fails the eval.
+    const activationCheck = ev.activation ? checkActivation(workspace, ev.activation, skillNames) : null;
+    if (activationCheck && !activationCheck.passed) {
+      const detail = activationCheck.error
+        || [activationCheck.missing.length && `missing: ${activationCheck.missing.join(', ')}`,
+          activationCheck.unexpected.length && `activated but irrelevant: ${activationCheck.unexpected.join(', ')}`]
+          .filter(Boolean).join('; ');
+      console.log(`  ✗  eval ${ev.id}: activation check failed — ${detail}`);
+      failures++;
+    } else if (activationCheck) {
+      console.log(`eval ${ev.id}: activation check passed (${activationCheck.activated.join(', ') || 'none'})`);
+    }
     const gradingInstructions = kind === 'dialogue'
       ? [
         'You are grading an agent dialogue transcript against explicit expectations.',
@@ -592,7 +706,8 @@ function runBehavioral(skillName, dryRun) {
       grader_model: 'unknown',
       timestamp: new Date().toISOString(),
     };
-    if (!persistGradingOutcome(base, grading, raw, runMeta)) {
+    const recorded = grading && activationCheck ? { ...grading, activation_check: activationCheck } : grading;
+    if (!persistGradingOutcome(base, recorded, raw, runMeta)) {
       console.log(`  ✗  eval ${ev.id}: grader returned invalid JSON — raw saved to ${path.relative(ROOT, base)}.grading.raw.txt`);
       failures++;
       continue;
@@ -635,4 +750,12 @@ function main(args = process.argv.slice(2)) {
 
 if (require.main === module) main();
 
-module.exports = { materializeWorkspace, parseGrading, clearGradingSlot, persistGradingOutcome, extractExecutorModel };
+module.exports = {
+  materializeWorkspace,
+  parseGrading,
+  clearGradingSlot,
+  persistGradingOutcome,
+  extractExecutorModel,
+  parseActivatedSkills,
+  checkActivation,
+};
