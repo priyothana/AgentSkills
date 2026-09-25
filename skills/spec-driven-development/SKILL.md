@@ -141,7 +141,9 @@ Don't silently fill in ambiguous requirements. The spec's entire purpose is to s
 - Never: [...]
 
 ## Success Criteria
-[How we'll know this is done — specific, testable conditions]
+[How we'll know this is done — specific, testable conditions, each with a stable ID]
+- AC-1: [condition]
+- AC-2: [condition]
 
 ## Open Questions
 [Anything unresolved that needs human input]
@@ -166,6 +168,8 @@ REFRAMED SUCCESS CRITERIA:
 ```
 
 This lets you loop, retry, and problem-solve toward a clear goal rather than guessing what "faster" means.
+
+**Give each success criterion a stable ID** (`AC-1`, `AC-2`, …). Tasks cite the IDs they satisfy, and the pull request checks them off (see Change Descriptions in `code-review-and-quality`), so "is AC-3 done?" has one answer from spec to merge. Like module ids, IDs are never renumbered: a dropped criterion keeps its ID, marked removed, and a new one gets the next number.
 
 ### Phase 2: Plan
 
@@ -198,6 +202,7 @@ Break the plan into discrete, implementable tasks:
 **Task template:**
 ```markdown
 - [ ] Task: [Description]
+  - Satisfies: [Spec criterion IDs, e.g. AC-1, AC-3]
   - Acceptance: [What must be true when done]
   - Verify: [How to confirm — test command, build, manual check]
   - Files: [Which files will be touched]
@@ -244,7 +249,7 @@ Before proceeding to implementation, confirm:
 
 - [ ] The spec covers all six core areas
 - [ ] The human has reviewed and approved the spec
-- [ ] Success criteria are specific and testable
+- [ ] Success criteria are specific and testable, each with a stable `AC-n` ID
 - [ ] Boundaries (Always/Ask First/Never) are defined
 - [ ] The spec is saved to a file in the repository
 - [ ] If the request bundles several independently testable capabilities, a capability map (module ids, dependency direction, build order) was approved before any module spec was written

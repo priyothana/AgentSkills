@@ -88,6 +88,8 @@ Each task follows this structure, whether it lands in the markdown task list or 
 
 **Description:** One paragraph explaining what this task accomplishes.
 
+**Satisfies:** [Spec success-criterion IDs this task delivers, e.g. AC-1, AC-3 — or "None" for enabling work such as scaffolding]
+
 **Acceptance criteria:**
 - [ ] [Specific, testable condition]
 - [ ] [Specific, testable condition]
@@ -257,6 +259,7 @@ When multiple agents or sessions are available:
 Before starting implementation, confirm:
 
 - [ ] Every task has acceptance criteria
+- [ ] When the spec has `AC-n` IDs, every one is cited by at least one task's **Satisfies** line (an uncited criterion is work nobody planned)
 - [ ] Every task has a verification step
 - [ ] Task dependencies are identified and ordered correctly
 - [ ] The cross-cutting triage answers all nine questions with evidence, and each task's Skills field lists only skills the triage activated for that task

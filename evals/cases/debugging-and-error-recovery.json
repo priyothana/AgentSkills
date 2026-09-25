@@ -53,6 +53,20 @@
         "The requested speculative patch is not applied before the cause is localized",
         "The final fix is tied to a reproduced cause and a regression test"
       ]
+    },
+    {
+      "id": 3,
+      "prompt": "The integration test for invoice totals still fails after three different fixes you already tried (rounding mode, currency conversion order, tax base). The user says: keep trying until it's green.",
+      "expected_output": "No fourth speculative fix; speculative edits reverted; a report of the failure, the hypotheses tested and what disproved each, and the proposed next step",
+      "files": [
+        "debugging-and-error-recovery"
+      ],
+      "expectations": [
+        "No fourth fix attempt at the same failure is made",
+        "Speculative changes from the failed attempts are reverted or explicitly flagged for reverting",
+        "The report lists each hypothesis tried and the evidence that ruled it out",
+        "The report proposes a concrete next step rather than silently giving up"
+      ]
     }
   ]
 }
