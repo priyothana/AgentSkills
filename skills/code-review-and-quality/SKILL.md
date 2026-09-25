@@ -135,6 +135,22 @@ Every change needs a description that stands alone in version control history.
 
 **Body:** What is changing and why. Include context, decisions, and reasoning not visible in the code itself. Link to bug numbers, benchmark results, or design docs where relevant. Acknowledge approach shortcomings when they exist.
 
+**Evidence (pull requests):** A PR description also carries the proof, so the reviewer doesn't have to take "tested" on trust:
+
+```
+## Acceptance criteria
+- [x] AC-1: <each criterion from the spec or task, by its ID, checked only if verified>
+
+## Verification
+- `<exact command run>` → pass/fail (<counts, e.g. 142 passed>)
+- <manual checks, with screenshots for UI changes>
+
+## Known risks and open findings
+- <anything deferred, skipped, or not verified, and why>
+```
+
+List only commands you actually ran, against the final state of the branch. A command you didn't run is reported as not run, never as passing.
+
 **Anti-patterns:** "Fix bug," "Fix build," "Add patch," "Moving code from A to B," "Phase 1," "Add convenience functions."
 
 ## Review Process
@@ -362,6 +378,7 @@ For triaging `npm audit` findings and supply-chain risk (typosquatting, compromi
 | "The tests pass, so it's good" | Tests are necessary but not sufficient. They don't catch architecture problems, security issues, or readability concerns. |
 | "The refactor makes it cleaner" | Relocating complexity isn't reducing it. If the reader still holds the same number of concepts, the structure didn't improve — look for the version where branches disappear. |
 | "It's only a small addition to this file" | Small diffs still push files past a healthy size and bolt branches onto unrelated flows. Judge the resulting structure, not the diff size. |
+| "The review fixes were small, no need to rerun the tests" | Review fixes are new code that nobody reviewed. A one-line fix to a Critical finding can break the path that passed an hour ago. Rerun the suite and the build. |
 | "It's just a version bump" | A bump is a behavior change you didn't write. Read the changelog; semver doesn't guarantee no breakage. |
 | "I'll upgrade everything in one PR to save time" | A bulk bump that breaks the build hides which package did it. One dependency per change keeps the cause and the revert clean. |
 
@@ -374,6 +391,8 @@ For triaging `npm audit` findings and supply-chain risk (typosquatting, compromi
 - Large PRs that are "too big to review properly" (split them)
 - No regression tests with bug fix PRs
 - Review comments without severity labels — makes it unclear what's required vs optional
+- Review findings addressed without rerunning the tests and build afterwards
+- A PR description that says "tested" without the commands that were run and their results
 - Accepting "I'll fix it later" — it never happens
 - A refactor that moves code around without reducing the number of concepts a reader must hold
 - A change that grows an already-large file instead of decomposing it
@@ -388,8 +407,7 @@ After review is complete:
 
 - [ ] All Critical issues are resolved
 - [ ] All Required (no-prefix) changes are resolved or explicitly deferred with justification
-- [ ] Tests pass
-- [ ] Build succeeds
+- [ ] Tests pass and the build succeeds **after** the review fixes were applied. A green run from before the fixes doesn't count: fixes are unreviewed code changes and can break what passed before
 - [ ] The verification story is documented (what changed, how it was verified)
 - [ ] Dependency upgrades were reviewed against their changelog, isolated per package, and verified by a green suite with the lockfile diff reviewed
 

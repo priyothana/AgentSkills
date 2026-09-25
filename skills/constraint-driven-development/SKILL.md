@@ -105,6 +105,7 @@ Last reviewed: 2026-08-08 by @addy
 - No unimplemented stubs: `throw new Error("Not implemented")`, empty `catch {}`
 - No skipped or deleted tests without a reason in the commit message
 - No secrets in source
+- No edits to protected paths without explicit approval: `.git/`, `.env*`, credential files, already-applied migrations (list this project's own here)
 - This file does not get weakened to make a change pass
 
 ## Enforced with numbers
@@ -115,6 +116,7 @@ Last reviewed: 2026-08-08 by @addy
 | Lint | Zero errors from our config | `biome check` | every edit |
 | Secrets | No secrets in source | `gitleaks detect --redact` | every edit |
 | Coverage | Changed lines ≥ 80% covered | `vitest run --coverage` + git diff | task end, CI |
+| Change size | ≤ 5 files touched per task | `git diff --name-only <task-base> \| wc -l` | task end |
 | Security: code | No high findings | `semgrep scan --config p/default` | CI |
 | Security: deps | Nothing at high or above | `osv-scanner scan source -r .` | CI |
 | Accessibility | Zero critical or serious | `axe $PREVIEW_URL --tags wcag2a,wcag2aa,wcag21aa` | preview deploy |
@@ -239,6 +241,7 @@ When the user has no opinion, use these. They're chosen to be met by most codeba
 |------------|---------|-----------------|
 | Coverage of changed lines | ≥ 80% | High enough to force a test, low enough to allow a config line |
 | Project coverage | today's value, must not fall | No argument needed to adopt |
+| Files touched per task | ≤ 5 | The task-size ceiling in `planning-and-task-breakdown`; a larger diff means the task should have been split, and it's too big to review |
 | Mutation score (if used) | ≥ 60% to start | Typical for a suite never mutated before; 80% is mature |
 | Dependency vulnerabilities | nothing at high or above | Below that is mostly noise |
 | LCP | ≤ 2500 ms | Core Web Vitals "good" threshold |

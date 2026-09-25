@@ -93,6 +93,8 @@ update auth.ts
 - `docs` — Documentation only
 - `chore` — Tooling, dependencies, config
 
+**Pull request descriptions** follow the same rule and also carry verification evidence: the acceptance criteria met, the exact commands run and their results, and any open risks. See the evidence template under Change Descriptions in `code-review-and-quality`.
+
 ### 4. Keep Concerns Separate
 
 Don't combine formatting changes with behavior changes. Don't combine refactors with features. Each type of change should be a separate commit — and ideally a separate PR:
