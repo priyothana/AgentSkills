@@ -1,0 +1,52 @@
+{
+  "skill_name": "frontend-routing-and-navigation",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "Add a protected route that redirects signed-out users to login and back again",
+        "top_k": 3
+      },
+      {
+        "prompt": "Filters reset when I reload the page, keep them in the URL query string",
+        "top_k": 3
+      },
+      {
+        "prompt": "Add a 404 page and handle unknown project IDs in our Next.js routes",
+        "top_k": 3
+      },
+      {
+        "prompt": "Warn the user about unsaved changes before navigating away from the form",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "Build an Express endpoint with a controller and service for project settings",
+        "owner": "backend-application-architecture"
+      },
+      {
+        "prompt": "Search results show matches for an old query when typing fast, fix the race in the component",
+        "owner": "frontend-state-and-lifecycle-patterns"
+      }
+    ]
+  },
+  "evals": [
+    {
+      "id": 1,
+      "kind": "execution",
+      "prompt": "Implement the feature described in FEATURE.md.",
+      "expected_output": "A settings route registered in the existing router with requireSignIn plus an admin guard, numeric ID validation and not-found handling, a validated and defaulted tab query parameter, and route tests",
+      "files": [
+        "frontend-routing-and-navigation"
+      ],
+      "expectations": [
+        "The settings route is added to the existing routes table and uses the router's guard mechanism, including requireSignIn, rather than a new router or checks inside the view",
+        "A signed-in user who is not an admin of that project gets a 403 forbidden result, based on the project's roles from the API module",
+        "Non-numeric or unknown project IDs resolve to 404 not-found rather than an error or a 200",
+        "The tab query parameter is validated against general, members, and danger, and a missing or invalid tab falls back to general or is normalized with a redirect",
+        "Tests cover anonymous redirect to login with a returnTo that keeps the tab query, admin access, non-admin forbidden, invalid and unknown IDs, and tab handling",
+        "The full suite is run with npm test after the change and passes"
+      ]
+    }
+  ]
+}

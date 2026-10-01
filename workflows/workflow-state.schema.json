@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Orchestrator Workflow State",
+  "description": "Living state file the orchestrator persona reads and updates at every stage transition. One file per in-flight request. Not committed to version control by default — treat it as run state, like a CI job log.",
+  "type": "object",
+  "required": ["request", "classification", "stages", "current_stage", "history", "loop_counts", "status"],
+  "properties": {
+    "request": {
+      "type": "object",
+      "required": ["title", "summary", "received_at"],
+      "properties": {
+        "title": { "type": "string" },
+        "summary": { "type": "string" },
+        "received_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "classification": {
+      "type": "string",
+      "enum": ["new-feature", "bug-fix", "refactor", "performance", "security", "ambiguous"]
+    },
+    "stages": {
+      "type": "array",
+      "description": "The planned stage sequence for this classification, from workflows/routing-table.md, frozen at plan time.",
+      "items": {
+        "type": "object",
+        "required": ["name", "owners", "exit_condition"],
+        "properties": {
+          "name": { "type": "string" },
+          "owners": { "type": "array", "items": { "type": "string" } },
+          "parallel": { "type": "boolean", "default": false },
+          "exit_condition": { "type": "string" }
+        }
+      }
+    },
+    "current_stage": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": ["in-progress", "blocked-ambiguous", "escalated", "ready-to-ship", "shipped"]
+    },
+    "history": {
+      "type": "array",
+      "description": "Append-only log. Every stage dispatch and every verdict gets an entry before the orchestrator advances.",
+      "items": {
+        "type": "object",
+        "required": ["stage", "owner", "verdict", "timestamp"],
+        "properties": {
+          "stage": { "type": "string" },
+          "owner": { "type": "string", "description": "Persona name that produced this entry" },
+          "verdict": {
+            "type": "string",
+            "enum": ["dispatched", "pass", "lgtm", "request-changes", "bug-found", "escalated", "signed-off"]
+          },
+          "evidence": {
+            "type": "string",
+            "description": "Path or pointer to the full report backing this verdict (test output, review report, security findings)"
+          },
+          "timestamp": { "type": "string", "format": "date-time" }
+        }
+      }
+    },
+    "loop_counts": {
+      "type": "object",
+      "description": "Per-stage retry counters. Keys are stage names, values are the number of request-changes/bug-found verdicts so far.",
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "blockers": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "escalations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "reason": { "type": "string" },
+          "routed_to": { "type": "string", "enum": ["tech-lead", "human"] },
+          "timestamp": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  }
+}

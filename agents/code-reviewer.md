@@ -98,5 +98,5 @@ Categorize every finding, using the same severity labels as the `code-review-and
 ## Composition
 
 - **Invoke directly when:** the user asks for a review of a specific change, file, or PR.
-- **Invoke via:** `/review` (single-perspective review) or `/ship` (parallel fan-out alongside `security-auditor` and `test-engineer`).
-- **Do not invoke from another persona.** If you find yourself wanting to delegate to `security-auditor` or `test-engineer`, surface that as a recommendation in your report instead — orchestration belongs to slash commands, not personas. See [docs/agents.md](../docs/agents.md).
+- **Invoke via:** `/review` (single-perspective review), `/ship` (parallel fan-out alongside `security-auditor` and `test-engineer`), or the Orchestrator's Review stage in autonomous mode.
+- **Do not invoke from another persona, including the Orchestrator's own voice.** If you find yourself wanting to delegate to `security-auditor` or `test-engineer`, surface that as a recommendation in your report instead. In autonomous mode, a REQUEST CHANGES verdict routes back to the originating developer persona as a structured change request via the Orchestrator, not directly — see [docs/agents.md](../docs/agents.md#autonomous-orchestration-the-one-exception).

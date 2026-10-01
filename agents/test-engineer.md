@@ -91,5 +91,5 @@ When analyzing test coverage:
 ## Composition
 
 - **Invoke directly when:** the user asks for test design, coverage analysis, or a Prove-It test for a specific bug.
-- **Invoke via:** `/test` (TDD workflow) or `/ship` (parallel fan-out for coverage gap analysis alongside `code-reviewer` and `security-auditor`).
-- **Do not invoke from another persona.** Recommendations to add tests belong in your report; the user or a slash command decides when to act on them. See [docs/agents.md](../docs/agents.md).
+- **Invoke via:** `/test` (TDD workflow), `/ship` (parallel fan-out for coverage gap analysis alongside `code-reviewer` and `security-auditor`), or the Orchestrator's QA stage in autonomous mode.
+- **Do not invoke from another persona, including the Orchestrator's own voice.** Recommendations to add tests belong in your report. In autonomous mode, a failing sign-off routes back to the originating developer persona as a structured bug report via the Orchestrator, not directly — see [docs/agents.md](../docs/agents.md#autonomous-orchestration-the-one-exception).

@@ -184,6 +184,7 @@ Each step is independently deployable and reversible: if step 4 misbehaves, roll
 
 **Rules:**
 - **Additive first, destructive last and alone.** Adds (new nullable column, new table, new index) are safe in any deploy; drops and renames get their own deploy *after* no code references the old shape.
+- **Never edit a migration that has been applied or merged; add a new one.** Environments that already ran the old version won't rerun it. Editing it makes the recorded schema history lie, and fresh databases drift from existing ones. Correct a mistake with a new forward migration.
 - **Every migration has a tested down path.** A migration you can't reverse is a deploy you can't roll back. Write and run the `down` before merging.
 - **Backfill in batches, off the hot path.** A single `UPDATE` over millions of rows locks the table; chunk it and throttle.
 - **Build large indexes without blocking writes** (e.g. Postgres `CREATE INDEX CONCURRENTLY`).
@@ -213,6 +214,7 @@ Zombie code is code that nobody owns but everybody depends on. It's not actively
 | "We can maintain both systems indefinitely" | Two systems doing the same thing is double the maintenance, testing, documentation, and onboarding cost. |
 | "Just rename the column, it's one line" | During the rollout, old and new code run together — one will query a column that no longer exists. Expand/contract, never rename in place. |
 | "I'll add the column and drop the old one in the same migration" | That couples a safe add to a destructive drop. Drops get their own deploy, after no code references the old shape. |
+| "I'll just fix the typo in the existing migration" | Every environment that already applied it keeps the old version. Only fresh databases get the fix, so they drift. Add a new forward migration. |
 | "We'll write the rollback if we need it" | A migration with no down path is a deploy you can't reverse. Write and run the `down` before merging. |
 
 ## Red Flags
@@ -227,6 +229,7 @@ Zombie code is code that nobody owns but everybody depends on. It's not actively
 - A schema change and the code that depends on it shipped in the same deploy
 - A column renamed or dropped in place rather than via expand/contract
 - A migration merged with no tested down path, or a backfill that locks the table
+- An already-applied or merged migration file edited in place
 
 ## Verification
 

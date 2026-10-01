@@ -14,3 +14,5 @@ Review the current changes (staged or recent commits) across all five axes:
 
 Categorize findings as Critical, Important, or Suggestion.
 Output a structured review with specific file:line references and fix recommendations.
+
+If you then apply fixes for the findings, rerun the full test suite and the build before calling the review resolved. Report the results; don't assume the earlier green run still holds.

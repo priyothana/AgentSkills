@@ -1,0 +1,8 @@
+{
+  "common": { "loading": "Wird geladen…" },
+  "login": { "title": "Anmelden", "continue": "Mit SSO fortfahren" },
+  "projects": { "title": "Projekte", "loadFailed": "Projekte konnten nicht geladen werden." },
+  "project": { "createdOn": "Erstellt am {{date}}", "loadFailed": "Dieses Projekt konnte nicht geladen werden." },
+  "plans": { "free": "Kostenlos", "pro": "Pro" },
+  "notFound": { "title": "Seite nicht gefunden", "home": "Zurück zu den Projekten" }
+}

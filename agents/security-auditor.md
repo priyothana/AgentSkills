@@ -108,5 +108,5 @@ Map findings to the OWASP Top 10 for LLM Applications where relevant.
 ## Composition
 
 - **Invoke directly when:** the user wants a security-focused pass on a specific change, file, or system component.
-- **Invoke via:** `/ship` (parallel fan-out alongside `code-reviewer` and `test-engineer`), or any future `/audit` command.
-- **Do not invoke from another persona.** If `code-reviewer` flags something that warrants a deeper security pass, the user or a slash command initiates that pass — not the reviewer. See [docs/agents.md](../docs/agents.md).
+- **Invoke via:** `/ship` (parallel fan-out alongside `code-reviewer` and `test-engineer`), any future `/audit` command, or the Orchestrator's security gate for requests classified Security or flagged by `architecture-agent` as touching auth/payments/data access.
+- **Do not invoke from another persona, including the Orchestrator's own voice.** If `code-reviewer` flags something that warrants a deeper security pass, that recommendation routes through the Orchestrator or the user — not a direct call. See [docs/agents.md](../docs/agents.md#autonomous-orchestration-the-one-exception).

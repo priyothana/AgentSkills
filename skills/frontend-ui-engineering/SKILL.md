@@ -307,6 +307,8 @@ function useToggleTask() {
 
 For detailed accessibility requirements and testing tools, see `../../references/accessibility-checklist.md`.
 
+For state ownership, effects, and cleanup over time, use `frontend-state-and-lifecycle-patterns`. For pages, URLs, and guards, use `frontend-routing-and-navigation`. For translations and locale formatting, use `frontend-localization-and-i18n`.
+
 ## Common Rationalizations
 
 | Rationalization | Reality |

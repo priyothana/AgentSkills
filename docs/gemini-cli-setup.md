@@ -107,7 +107,7 @@ This is useful when you want to ensure a specific workflow is followed without w
 
 ## Slash Commands
 
-The repo ships 10 slash commands under `.gemini/commands/`: 8 lifecycle commands plus the `/webperf` specialist audit and `/memory` for cross-session context. Gemini CLI auto-discovers them when you run from the project root.
+The repo ships 11 slash commands under `.gemini/commands/`: 8 lifecycle commands, the `/webperf` specialist audit, `/autopilot` for autonomous end-to-end orchestration, and `/memory` for cross-session context. Gemini CLI auto-discovers them when you run from the project root.
 
 | Command | What it does |
 |---------|--------------|

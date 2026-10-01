@@ -1,0 +1,52 @@
+{
+  "skill_name": "database-seeding-and-data-bootstrap",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "Our seed script creates duplicate rows every time it runs, make it idempotent",
+        "top_k": 3
+      },
+      {
+        "prompt": "Create the first admin user and default plans when a new environment boots",
+        "top_k": 3
+      },
+      {
+        "prompt": "Set up test fixtures and factories so each test creates its own data",
+        "top_k": 3
+      },
+      {
+        "prompt": "Should the list of countries go in a migration or in the seed data?",
+        "top_k": 3
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "Write a script to delete duplicate invoices for one customer in production",
+        "owner": "database-query-and-script-management"
+      },
+      {
+        "prompt": "Add a migration that renames a column with expand and contract",
+        "owner": "deprecation-and-migration"
+      }
+    ]
+  },
+  "evals": [
+    {
+      "id": 1,
+      "kind": "execution",
+      "prompt": "Do the task described in TASK.md.",
+      "expected_output": "Plans and the first admin separated from development sample data, an environment guard that keeps destructive reset and sample data out of staging and production, idempotent upserts by natural key, admin credentials from the environment, and tests proving reruns and the guard",
+      "files": [
+        "database-seeding-and-data-bootstrap"
+      ],
+      "expectations": [
+        "Default plans and the first admin are split from the sample customers into a step that is allowed in staging and production, while the sample-customer seed is limited to development and test",
+        "Any step that clears tables refuses to run unless APP_ENV is development or test, and it fails closed when APP_ENV is missing",
+        "The production-capable step never deletes data; plans are upserted by code and the admin is created only if no user with that email exists",
+        "The admin password or credentials come from environment variables or an invite flow rather than the hard-coded admin123",
+        "Customer plan references are looked up by plan code rather than a hard-coded planId",
+        "Tests show that running the production-capable step twice creates no duplicates and that the development seed refuses to run with APP_ENV=production, and npm test passes"
+      ]
+    }
+  ]
+}

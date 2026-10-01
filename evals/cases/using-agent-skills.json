@@ -13,6 +13,10 @@
       {
         "prompt": "Route this request to the right skill in the pack",
         "top_k": 3
+      },
+      {
+        "prompt": "Before anyone starts coding, triage this requirement's cross-cutting concerns and tell me which skills to activate",
+        "top_k": 1
       }
     ],
     "negative": [
@@ -23,6 +27,10 @@
       {
         "prompt": "Make the modal accessible for keyboard users",
         "owner": "frontend-ui-engineering"
+      },
+      {
+        "prompt": "Break the approved spec into small tasks with acceptance criteria and dependencies",
+        "owner": "planning-and-task-breakdown"
       }
     ]
   },
@@ -38,6 +46,377 @@
         "The chosen skill matches the decision tree in the meta-skill",
         "The rationale references the routing logic rather than guessing",
         "Core operating behaviors (assumptions surfaced) are respected"
+      ]
+    },
+    {
+      "id": 2,
+      "kind": "execution",
+      "prompt": "Plan the work in REQUIREMENT.md so it can be handed to implementers. Do not write implementation code yet.",
+      "expected_output": "A recorded cross-cutting triage answering all nine questions from code evidence, activating exactly multi-tenant-architecture, backend-application-architecture, application-rbac-and-authorization, and database-query-and-script-management, with each task carrying only the skills its own change needs",
+      "files": [
+        "using-agent-skills-triage"
+      ],
+      "expectations": [
+        "Before any task is written or assigned, the agent records an answer to each of the nine triage questions (multi-tenancy, tenant boundary, frontend routing, localization, frontend state, backend layering, RBAC, seed/bootstrap, data scripts), each with a reason",
+        "The agent identifies the application as multi-tenant, citing the resolveOrganization middleware or the org_id scoping in projectRepository, and activates multi-tenant-architecture",
+        "The agent activates application-rbac-and-authorization because archiving is limited to admins, and backend-application-architecture because a new endpoint must go through the existing route, service, and repository layers",
+        "The agent activates database-query-and-script-management for the existing production rows with deleted = 1 that must become archived",
+        "frontend-routing-and-navigation, frontend-localization-and-i18n, and frontend-state-and-lifecycle-patterns are answered 'no' on the grounds that the repository has no frontend, and are not activated",
+        "database-seeding-and-data-bootstrap is not activated, because permissions live in code in ROLE_PERMISSIONS rather than in seed data and no fresh-environment data is needed",
+        "Each planned task lists only the activated skills its own change needs (for example, the backfill task carries database-query-and-script-management but not application-rbac-and-authorization), rather than every task carrying all activated skills",
+        "No implementation code under src/ is modified"
+      ]
+    },
+    {
+      "id": 3,
+      "kind": "execution",
+      "prompt": "Requirement for the codebase in orchestration-projects-app/: \"Add a customers API so an organization can keep its customer list: list, get, and create customers (name, email). Every member of an organization has the same access to its customers; there are no role restrictions. The UI will be built in a later requirement.\"\n\nBefore any implementation work is planned or assigned, run the cross-cutting concern triage for this requirement against the code. Write it to TRIAGE.md in the current directory using the recording format, ending with an ACTIVATED: line that lists every activated skill (ACTIVATED: none if nothing is activated). Do not implement the requirement.",
+      "expected_output": "Orchestration (tenant-aware customer API): a recorded nine-question triage that activates multi-tenant-architecture, backend-application-architecture and leaves frontend-routing-and-navigation, frontend-localization-and-i18n, frontend-state-and-lifecycle-patterns, application-rbac-and-authorization, database-seeding-and-data-bootstrap, database-query-and-script-management, frontend-ui-engineering inactive",
+      "files": [
+        "orchestration-projects-app"
+      ],
+      "activation": {
+        "activate": [
+          "multi-tenant-architecture",
+          "backend-application-architecture"
+        ],
+        "not_activate": [
+          "frontend-routing-and-navigation",
+          "frontend-localization-and-i18n",
+          "frontend-state-and-lifecycle-patterns",
+          "application-rbac-and-authorization",
+          "database-seeding-and-data-bootstrap",
+          "database-query-and-script-management",
+          "frontend-ui-engineering"
+        ],
+        "optional": []
+      },
+      "expectations": [
+        "Before recording any answer, the agent reads the relevant code (visible as tool calls in the trace), and TRIAGE.md answers all nine triage questions, each with a reason taken from the requirement or the code rather than from keywords alone",
+        "Question 1 is answered yes, citing the resolveOrganization middleware or the org_id filtering in projectRepository, and question 2 is answered yes because the new customers table and its queries hold tenant-owned data; multi-tenant-architecture is activated",
+        "backend-application-architecture is activated because the new endpoints must follow the existing route, service, and repository layering",
+        "application-rbac-and-authorization is not activated: every member has the same access, and keeping one organization out of another's customers is a tenancy concern, not a role check",
+        "frontend-routing-and-navigation, frontend-localization-and-i18n, and frontend-state-and-lifecycle-patterns are not activated because the UI is explicitly out of scope",
+        "database-seeding-and-data-bootstrap and database-query-and-script-management are not activated: a fresh environment needs no customer rows to work, and no existing rows change",
+        "The ACTIVATED: line in TRIAGE.md lists multi-tenant-architecture, backend-application-architecture and none of frontend-routing-and-navigation, frontend-localization-and-i18n, frontend-state-and-lifecycle-patterns, application-rbac-and-authorization, database-seeding-and-data-bootstrap, database-query-and-script-management, frontend-ui-engineering",
+        "No implementation is written: no file under orchestration-projects-app/ is created or modified, and TRIAGE.md is the only new file"
+      ]
+    },
+    {
+      "id": 4,
+      "kind": "execution",
+      "prompt": "Requirement for the codebase in orchestration-invoicing-api/: \"Right now any signed-in user can do anything with invoices. Restrict the invoices API: only admins may create, edit, or void invoices; members may only list and view them. users.role already holds admin or member for every user.\"\n\nBefore any implementation work is planned or assigned, run the cross-cutting concern triage for this requirement against the code. Write it to TRIAGE.md in the current directory using the recording format, ending with an ACTIVATED: line that lists every activated skill (ACTIVATED: none if nothing is activated). Do not implement the requirement.",
+      "expected_output": "Orchestration (RBAC on an existing API): a recorded nine-question triage that activates application-rbac-and-authorization (backend-application-architecture may also appear) and leaves multi-tenant-architecture, frontend-routing-and-navigation, frontend-localization-and-i18n, frontend-state-and-lifecycle-patterns, database-seeding-and-data-bootstrap, database-query-and-script-management, frontend-ui-engineering inactive",
+      "files": [
+        "orchestration-invoicing-api"
+      ],
+      "activation": {
+        "activate": [
+          "application-rbac-and-authorization"
+        ],
+        "not_activate": [
+          "multi-tenant-architecture",
+          "frontend-routing-and-navigation",
+          "frontend-localization-and-i18n",
+          "frontend-state-and-lifecycle-patterns",
+          "database-seeding-and-data-bootstrap",
+          "database-query-and-script-management",
+          "frontend-ui-engineering"
+        ],
+        "optional": [
+          "backend-application-architecture"
+        ]
+      },
+      "expectations": [
+        "Before recording any answer, the agent reads the relevant code (visible as tool calls in the trace), and TRIAGE.md answers all nine triage questions, each with a reason taken from the requirement or the code rather than from keywords alone",
+        "application-rbac-and-authorization is activated, and the triage places enforcement on the server (the invoices routes or service), not only in a client",
+        "Question 1 is answered no because nothing scopes data by tenant or organization (no tenant column, no tenant-resolving middleware), so question 2 is no and multi-tenant-architecture is not activated; no tenant concept is proposed",
+        "database-seeding-and-data-bootstrap is not activated: roles already exist on users.role and permissions are not stored as rows, so a fresh environment needs no new data",
+        "database-query-and-script-management is not activated because every existing user already has a role and no rows need correcting",
+        "The frontend concern skills (routing, localization, state/lifecycle) are answered no because the repository has no frontend",
+        "The ACTIVATED: line in TRIAGE.md lists application-rbac-and-authorization (backend-application-architecture may also appear) and none of multi-tenant-architecture, frontend-routing-and-navigation, frontend-localization-and-i18n, frontend-state-and-lifecycle-patterns, database-seeding-and-data-bootstrap, database-query-and-script-management, frontend-ui-engineering",
+        "No implementation is written: no file under orchestration-invoicing-api/ is created or modified, and TRIAGE.md is the only new file"
+      ]
+    },
+    {
+      "id": 5,
+      "kind": "execution",
+      "prompt": "Requirement for the codebase in orchestration-projects-app/: \"Add a public About page at /about with a short paragraph describing the product and a link to sign in. It must be available in English and German, like the rest of the app.\"\n\nBefore any implementation work is planned or assigned, run the cross-cutting concern triage for this requirement against the code. Write it to TRIAGE.md in the current directory using the recording format, ending with an ACTIVATED: line that lists every activated skill (ACTIVATED: none if nothing is activated). Do not implement the requirement.",
+      "expected_output": "Orchestration (translated frontend page): a recorded nine-question triage that activates frontend-routing-and-navigation, frontend-localization-and-i18n and leaves multi-tenant-architecture, frontend-state-and-lifecycle-patterns, backend-application-architecture, application-rbac-and-authorization, database-seeding-and-data-bootstrap, database-query-and-script-management inactive",
+      "files": [
+        "orchestration-projects-app"
+      ],
+      "activation": {
+        "activate": [
+          "frontend-routing-and-navigation",
+          "frontend-localization-and-i18n"
+        ],
+        "not_activate": [
+          "multi-tenant-architecture",
+          "frontend-state-and-lifecycle-patterns",
+          "backend-application-architecture",
+          "application-rbac-and-authorization",
+          "database-seeding-and-data-bootstrap",
+          "database-query-and-script-management"
+        ],
+        "optional": []
+      },
+      "expectations": [
+        "Before recording any answer, the agent reads the relevant code (visible as tool calls in the trace), and TRIAGE.md answers all nine triage questions, each with a reason taken from the requirement or the code rather than from keywords alone",
+        "frontend-routing-and-navigation is activated for the new /about URL, which the triage notes sits outside the RequireAuth guard because the page is public",
+        "frontend-localization-and-i18n is activated because the app already uses i18next with en.json and de.json, so the new text needs keys in both locale files",
+        "Question 1 is answered yes but question 2 is answered no because the static page reads and writes no organization data, so multi-tenant-architecture is not activated",
+        "frontend-state-and-lifecycle-patterns is not activated because the page is static: no fetch, effect, store, or timer",
+        "backend-application-architecture, application-rbac-and-authorization, database-seeding-and-data-bootstrap, and database-query-and-script-management are not activated: no server change, the page is public, and no data changes",
+        "The ACTIVATED: line in TRIAGE.md lists frontend-routing-and-navigation, frontend-localization-and-i18n and none of multi-tenant-architecture, frontend-state-and-lifecycle-patterns, backend-application-architecture, application-rbac-and-authorization, database-seeding-and-data-bootstrap, database-query-and-script-management",
+        "No implementation is written: no file under orchestration-projects-app/ is created or modified, and TRIAGE.md is the only new file"
+      ]
+    },
+    {
+      "id": 6,
+      "kind": "execution",
+      "prompt": "Requirement for the codebase in orchestration-projects-app/: \"Add an admin-only Members page at /settings/members that lists the members of the current organization (email and role). GET /api/members already exists and is restricted to admins and owners on the server. Users without access who open the URL should be sent back to the projects list.\"\n\nBefore any implementation work is planned or assigned, run the cross-cutting concern triage for this requirement against the code. Write it to TRIAGE.md in the current directory using the recording format, ending with an ACTIVATED: line that lists every activated skill (ACTIVATED: none if nothing is activated). Do not implement the requirement.",
+      "expected_output": "Orchestration (protected frontend route): a recorded nine-question triage that activates frontend-routing-and-navigation, application-rbac-and-authorization, frontend-state-and-lifecycle-patterns, frontend-localization-and-i18n (multi-tenant-architecture may also appear) and leaves backend-application-architecture, database-seeding-and-data-bootstrap, database-query-and-script-management inactive",
+      "files": [
+        "orchestration-projects-app"
+      ],
+      "activation": {
+        "activate": [
+          "frontend-routing-and-navigation",
+          "application-rbac-and-authorization",
+          "frontend-state-and-lifecycle-patterns",
+          "frontend-localization-and-i18n"
+        ],
+        "not_activate": [
+          "backend-application-architecture",
+          "database-seeding-and-data-bootstrap",
+          "database-query-and-script-management"
+        ],
+        "optional": [
+          "multi-tenant-architecture"
+        ]
+      },
+      "expectations": [
+        "Before recording any answer, the agent reads the relevant code (visible as tool calls in the trace), and TRIAGE.md answers all nine triage questions, each with a reason taken from the requirement or the code rather than from keywords alone",
+        "frontend-routing-and-navigation is activated for the new /settings/members route and its redirect for users without access",
+        "application-rbac-and-authorization is activated because the page must be hidden from members; the triage ties the client-side guard to the existing members:read permission in ROLE_PERMISSIONS and notes that the server already enforces it",
+        "frontend-state-and-lifecycle-patterns is activated because the page fetches members inside the view and must handle loading, error, and unmount",
+        "frontend-localization-and-i18n is activated because the app is localized and the page adds user-facing text",
+        "backend-application-architecture is not activated because the endpoint already exists and no server code changes",
+        "database-seeding-and-data-bootstrap and database-query-and-script-management are not activated: permissions live in code and no data changes",
+        "The ACTIVATED: line in TRIAGE.md lists frontend-routing-and-navigation, application-rbac-and-authorization, frontend-state-and-lifecycle-patterns, frontend-localization-and-i18n (multi-tenant-architecture may also appear) and none of backend-application-architecture, database-seeding-and-data-bootstrap, database-query-and-script-management",
+        "No implementation is written: no file under orchestration-projects-app/ is created or modified, and TRIAGE.md is the only new file"
+      ]
+    },
+    {
+      "id": 7,
+      "kind": "execution",
+      "prompt": "Requirement for the codebase in orchestration-projects-app/: \"On the project detail page, refresh the project every 30 seconds while the page is open so edits by teammates show up. Stop refreshing when the user leaves the page, and never let a slow response for a previously viewed project overwrite the project now on screen.\"\n\nBefore any implementation work is planned or assigned, run the cross-cutting concern triage for this requirement against the code. Write it to TRIAGE.md in the current directory using the recording format, ending with an ACTIVATED: line that lists every activated skill (ACTIVATED: none if nothing is activated). Do not implement the requirement.",
+      "expected_output": "Orchestration (lifecycle-based frontend feature): a recorded nine-question triage that activates frontend-state-and-lifecycle-patterns (multi-tenant-architecture may also appear) and leaves frontend-routing-and-navigation, frontend-localization-and-i18n, backend-application-architecture, application-rbac-and-authorization, database-seeding-and-data-bootstrap, database-query-and-script-management inactive",
+      "files": [
+        "orchestration-projects-app"
+      ],
+      "activation": {
+        "activate": [
+          "frontend-state-and-lifecycle-patterns"
+        ],
+        "not_activate": [
+          "frontend-routing-and-navigation",
+          "frontend-localization-and-i18n",
+          "backend-application-architecture",
+          "application-rbac-and-authorization",
+          "database-seeding-and-data-bootstrap",
+          "database-query-and-script-management"
+        ],
+        "optional": [
+          "multi-tenant-architecture"
+        ]
+      },
+      "expectations": [
+        "Before recording any answer, the agent reads the relevant code (visible as tool calls in the trace), and TRIAGE.md answers all nine triage questions, each with a reason taken from the requirement or the code rather than from keywords alone",
+        "frontend-state-and-lifecycle-patterns is activated for the interval timer, its cleanup when the view unmounts or projectId changes, and protection against stale responses",
+        "frontend-routing-and-navigation is not activated because the existing /projects/:projectId route and its URL do not change",
+        "frontend-localization-and-i18n is not activated because no user-facing text is added",
+        "backend-application-architecture and application-rbac-and-authorization are not activated because the existing GET /api/projects/:id endpoint and its permission are reused unchanged",
+        "database-seeding-and-data-bootstrap and database-query-and-script-management are not activated because no data changes",
+        "The ACTIVATED: line in TRIAGE.md lists frontend-state-and-lifecycle-patterns (multi-tenant-architecture may also appear) and none of frontend-routing-and-navigation, frontend-localization-and-i18n, backend-application-architecture, application-rbac-and-authorization, database-seeding-and-data-bootstrap, database-query-and-script-management",
+        "No implementation is written: no file under orchestration-projects-app/ is created or modified, and TRIAGE.md is the only new file"
+      ]
+    },
+    {
+      "id": 8,
+      "kind": "execution",
+      "prompt": "Requirement for the codebase in orchestration-projects-app/: \"Signing up a new organization fails on fresh development, test, and CI databases with \"free plan is missing\". Production and staging are fine: their plans rows (free: 3 projects and 5 members; pro: 100 projects and 50 members) were inserted by hand long ago. Make fresh environments work.\"\n\nBefore any implementation work is planned or assigned, run the cross-cutting concern triage for this requirement against the code. Write it to TRIAGE.md in the current directory using the recording format, ending with an ACTIVATED: line that lists every activated skill (ACTIVATED: none if nothing is activated). Do not implement the requirement.",
+      "expected_output": "Orchestration (database seed data): a recorded nine-question triage that activates database-seeding-and-data-bootstrap and leaves multi-tenant-architecture, frontend-routing-and-navigation, frontend-localization-and-i18n, frontend-state-and-lifecycle-patterns, backend-application-architecture, application-rbac-and-authorization, database-query-and-script-management, frontend-ui-engineering inactive",
+      "files": [
+        "orchestration-projects-app"
+      ],
+      "activation": {
+        "activate": [
+          "database-seeding-and-data-bootstrap"
+        ],
+        "not_activate": [
+          "multi-tenant-architecture",
+          "frontend-routing-and-navigation",
+          "frontend-localization-and-i18n",
+          "frontend-state-and-lifecycle-patterns",
+          "backend-application-architecture",
+          "application-rbac-and-authorization",
+          "database-query-and-script-management",
+          "frontend-ui-engineering"
+        ],
+        "optional": []
+      },
+      "expectations": [
+        "Before recording any answer, the agent reads the relevant code (visible as tool calls in the trace), and TRIAGE.md answers all nine triage questions, each with a reason taken from the requirement or the code rather than from keywords alone",
+        "database-seeding-and-data-bootstrap is activated because fresh environments need the free and pro plans rows, and the triage points at the existing server/db/seeds runner and its idempotent seed style",
+        "Question 1 is answered yes but question 2 is answered no because plans is global reference data with no org_id column, so multi-tenant-architecture is not activated",
+        "database-query-and-script-management is not activated because production and staging already have the rows and no live data needs correcting",
+        "backend-application-architecture is not activated because organizationService already reads the free plan correctly and no application code has to change",
+        "The frontend concern skills are not activated: plan labels already exist as plans.free and plans.pro in both locale files and no page changes",
+        "The ACTIVATED: line in TRIAGE.md lists database-seeding-and-data-bootstrap and none of multi-tenant-architecture, frontend-routing-and-navigation, frontend-localization-and-i18n, frontend-state-and-lifecycle-patterns, backend-application-architecture, application-rbac-and-authorization, database-query-and-script-management, frontend-ui-engineering",
+        "No implementation is written: no file under orchestration-projects-app/ is created or modified, and TRIAGE.md is the only new file"
+      ]
+    },
+    {
+      "id": 9,
+      "kind": "execution",
+      "prompt": "Requirement for the codebase in orchestration-projects-app/: \"An import bug (already fixed) created duplicate projects for organization 42 in production on 2026-09-20: several projects now exist two or three times with the same name. Delete the duplicates for organization 42 only, keeping the oldest copy of each.\"\n\nBefore any implementation work is planned or assigned, run the cross-cutting concern triage for this requirement against the code. Write it to TRIAGE.md in the current directory using the recording format, ending with an ACTIVATED: line that lists every activated skill (ACTIVATED: none if nothing is activated). Do not implement the requirement.",
+      "expected_output": "Orchestration (tenant-scoped data correction script): a recorded nine-question triage that activates database-query-and-script-management, multi-tenant-architecture and leaves frontend-routing-and-navigation, frontend-localization-and-i18n, frontend-state-and-lifecycle-patterns, backend-application-architecture, application-rbac-and-authorization, database-seeding-and-data-bootstrap, frontend-ui-engineering inactive",
+      "files": [
+        "orchestration-projects-app"
+      ],
+      "activation": {
+        "activate": [
+          "database-query-and-script-management",
+          "multi-tenant-architecture"
+        ],
+        "not_activate": [
+          "frontend-routing-and-navigation",
+          "frontend-localization-and-i18n",
+          "frontend-state-and-lifecycle-patterns",
+          "backend-application-architecture",
+          "application-rbac-and-authorization",
+          "database-seeding-and-data-bootstrap",
+          "frontend-ui-engineering"
+        ],
+        "optional": []
+      },
+      "expectations": [
+        "Before recording any answer, the agent reads the relevant code (visible as tool calls in the trace), and TRIAGE.md answers all nine triage questions, each with a reason taken from the requirement or the code rather than from keywords alone",
+        "database-query-and-script-management is activated because existing production rows must be deleted outside the application's normal code paths",
+        "multi-tenant-architecture is activated because the script touches tenant-owned projects rows and must be scoped to org_id = 42 so no other organization's projects are affected",
+        "backend-application-architecture is not activated because the bug is already fixed and no application code changes",
+        "database-seeding-and-data-bootstrap is not activated because this corrects live data rather than preparing fresh environments",
+        "application-rbac-and-authorization and the frontend concern skills are not activated because no permissions, pages, or UI change",
+        "The ACTIVATED: line in TRIAGE.md lists database-query-and-script-management, multi-tenant-architecture and none of frontend-routing-and-navigation, frontend-localization-and-i18n, frontend-state-and-lifecycle-patterns, backend-application-architecture, application-rbac-and-authorization, database-seeding-and-data-bootstrap, frontend-ui-engineering",
+        "No implementation is written: no file under orchestration-projects-app/ is created or modified, and TRIAGE.md is the only new file"
+      ]
+    },
+    {
+      "id": 10,
+      "kind": "execution",
+      "prompt": "Requirement for the codebase in orchestration-invoicing-api/: \"Refactor POST /api/orders. The handler in src/routes/orders.js validates input, prices items, runs SQL, and sends the confirmation email all inline. Split it into route, service, and repository layers like the invoices code. Behavior and responses must not change.\"\n\nBefore any implementation work is planned or assigned, run the cross-cutting concern triage for this requirement against the code. Write it to TRIAGE.md in the current directory using the recording format, ending with an ACTIVATED: line that lists every activated skill (ACTIVATED: none if nothing is activated). Do not implement the requirement.",
+      "expected_output": "Orchestration (backend layering refactor): a recorded nine-question triage that activates backend-application-architecture and leaves multi-tenant-architecture, frontend-routing-and-navigation, frontend-localization-and-i18n, frontend-state-and-lifecycle-patterns, application-rbac-and-authorization, database-seeding-and-data-bootstrap, database-query-and-script-management, frontend-ui-engineering inactive",
+      "files": [
+        "orchestration-invoicing-api"
+      ],
+      "activation": {
+        "activate": [
+          "backend-application-architecture"
+        ],
+        "not_activate": [
+          "multi-tenant-architecture",
+          "frontend-routing-and-navigation",
+          "frontend-localization-and-i18n",
+          "frontend-state-and-lifecycle-patterns",
+          "application-rbac-and-authorization",
+          "database-seeding-and-data-bootstrap",
+          "database-query-and-script-management",
+          "frontend-ui-engineering"
+        ],
+        "optional": []
+      },
+      "expectations": [
+        "Before recording any answer, the agent reads the relevant code (visible as tool calls in the trace), and TRIAGE.md answers all nine triage questions, each with a reason taken from the requirement or the code rather than from keywords alone",
+        "backend-application-architecture is activated, and the triage names the invoices route, service, and repository as the pattern to follow",
+        "multi-tenant-architecture is not activated because the application is single-tenant (no tenant column or tenant middleware); no tenant concept is proposed",
+        "application-rbac-and-authorization is not activated because who may create orders does not change",
+        "database-seeding-and-data-bootstrap and database-query-and-script-management are not activated because the refactor changes neither the schema nor any data",
+        "The frontend concern skills are answered no because the repository has no frontend",
+        "The ACTIVATED: line in TRIAGE.md lists backend-application-architecture and none of multi-tenant-architecture, frontend-routing-and-navigation, frontend-localization-and-i18n, frontend-state-and-lifecycle-patterns, application-rbac-and-authorization, database-seeding-and-data-bootstrap, database-query-and-script-management, frontend-ui-engineering",
+        "No implementation is written: no file under orchestration-invoicing-api/ is created or modified, and TRIAGE.md is the only new file"
+      ]
+    },
+    {
+      "id": 11,
+      "kind": "execution",
+      "prompt": "Requirement for the codebase in orchestration-projects-app/: \"Add comments to projects. On the project detail page, show the project's comments (author email, text, and when it was posted) and a form to post a new comment; the list updates after posting. Any member of the organization can read and post comments on its projects. Add the API endpoints this needs.\"\n\nBefore any implementation work is planned or assigned, run the cross-cutting concern triage for this requirement against the code. Write it to TRIAGE.md in the current directory using the recording format, ending with an ACTIVATED: line that lists every activated skill (ACTIVATED: none if nothing is activated). Do not implement the requirement.",
+      "expected_output": "Orchestration (full-stack feature): a recorded nine-question triage that activates multi-tenant-architecture, backend-application-architecture, frontend-localization-and-i18n, frontend-state-and-lifecycle-patterns and leaves frontend-routing-and-navigation, application-rbac-and-authorization, database-seeding-and-data-bootstrap, database-query-and-script-management inactive",
+      "files": [
+        "orchestration-projects-app"
+      ],
+      "activation": {
+        "activate": [
+          "multi-tenant-architecture",
+          "backend-application-architecture",
+          "frontend-localization-and-i18n",
+          "frontend-state-and-lifecycle-patterns"
+        ],
+        "not_activate": [
+          "frontend-routing-and-navigation",
+          "application-rbac-and-authorization",
+          "database-seeding-and-data-bootstrap",
+          "database-query-and-script-management"
+        ],
+        "optional": []
+      },
+      "expectations": [
+        "Before recording any answer, the agent reads the relevant code (visible as tool calls in the trace), and TRIAGE.md answers all nine triage questions, each with a reason taken from the requirement or the code rather than from keywords alone",
+        "multi-tenant-architecture is activated because comments are new tenant-owned data whose queries must be scoped by organization, including checking that the project belongs to the caller's organization",
+        "backend-application-architecture is activated for the new comment endpoints through the route, service, and repository layers",
+        "frontend-state-and-lifecycle-patterns is activated for fetching comments inside the view and the async post form that updates the list",
+        "frontend-localization-and-i18n is activated because the app is localized: new labels need keys in en.json and de.json, and posted times need locale-aware formatting",
+        "frontend-routing-and-navigation is not activated because the comments live on the existing /projects/:projectId page and no URL changes",
+        "application-rbac-and-authorization is not activated because every member may read and post, so no new role restriction exists",
+        "database-seeding-and-data-bootstrap and database-query-and-script-management are not activated: a new comments table needs no starter rows and no existing rows change",
+        "The ACTIVATED: line in TRIAGE.md lists multi-tenant-architecture, backend-application-architecture, frontend-localization-and-i18n, frontend-state-and-lifecycle-patterns and none of frontend-routing-and-navigation, application-rbac-and-authorization, database-seeding-and-data-bootstrap, database-query-and-script-management",
+        "No implementation is written: no file under orchestration-projects-app/ is created or modified, and TRIAGE.md is the only new file"
+      ]
+    },
+    {
+      "id": 12,
+      "kind": "execution",
+      "prompt": "Requirement for the codebase in orchestration-projects-app/: \"The address form needs a country picker. Add GET /api/countries returning the country list (code and name) from the countries table. It is public: the sign-up form calls it before anyone is signed in. The frontend change, including how country names are displayed, is a separate task.\"\n\nBefore any implementation work is planned or assigned, run the cross-cutting concern triage for this requirement against the code. Write it to TRIAGE.md in the current directory using the recording format, ending with an ACTIVATED: line that lists every activated skill (ACTIVATED: none if nothing is activated). Do not implement the requirement.",
+      "expected_output": "Orchestration (multi-tenant app, tenant-neutral change): a recorded nine-question triage that activates backend-application-architecture and leaves multi-tenant-architecture, frontend-routing-and-navigation, frontend-localization-and-i18n, frontend-state-and-lifecycle-patterns, application-rbac-and-authorization, database-seeding-and-data-bootstrap, database-query-and-script-management, frontend-ui-engineering inactive",
+      "files": [
+        "orchestration-projects-app"
+      ],
+      "activation": {
+        "activate": [
+          "backend-application-architecture"
+        ],
+        "not_activate": [
+          "multi-tenant-architecture",
+          "frontend-routing-and-navigation",
+          "frontend-localization-and-i18n",
+          "frontend-state-and-lifecycle-patterns",
+          "application-rbac-and-authorization",
+          "database-seeding-and-data-bootstrap",
+          "database-query-and-script-management",
+          "frontend-ui-engineering"
+        ],
+        "optional": []
+      },
+      "expectations": [
+        "Before recording any answer, the agent reads the relevant code (visible as tool calls in the trace), and TRIAGE.md answers all nine triage questions, each with a reason taken from the requirement or the code rather than from keywords alone",
+        "Question 1 is answered yes (the app is multi-tenant) but question 2 is answered no because countries is a global reference table with no org_id and the public route sits outside resolveOrganization, so multi-tenant-architecture is not activated",
+        "backend-application-architecture is activated for the new endpoint and where it sits relative to the authenticate and resolveOrganization middleware",
+        "application-rbac-and-authorization is not activated because the endpoint is deliberately public",
+        "database-seeding-and-data-bootstrap is not activated because server/db/seeds/01_countries.js already populates countries in every environment",
+        "The frontend concern skills and database-query-and-script-management are not activated because the frontend is out of scope and no existing rows change",
+        "The ACTIVATED: line in TRIAGE.md lists backend-application-architecture and none of multi-tenant-architecture, frontend-routing-and-navigation, frontend-localization-and-i18n, frontend-state-and-lifecycle-patterns, application-rbac-and-authorization, database-seeding-and-data-bootstrap, database-query-and-script-management, frontend-ui-engineering",
+        "No implementation is written: no file under orchestration-projects-app/ is created or modified, and TRIAGE.md is the only new file"
       ]
     }
   ]
