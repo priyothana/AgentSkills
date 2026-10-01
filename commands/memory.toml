@@ -1,0 +1,13 @@
+description = "Resume or store cross-session memory — searches the project memory store and asks for approval before injecting or storing"
+
+prompt = """
+Invoke the memory skill.
+
+The arguments select the mode: resume, store, search <query>, list, prune, or help. Default to resume when empty. For help, list these modes with one line each and stop.
+
+1. Run the store from the memory skill's scripts/memory.js. If the store is missing or empty, say so and stop. Do not reconstruct memory from the conversation.
+2. resume: run `suggest` for the current task, then build the Previous Context pack with `pack` once the user approves (an explicit resume request counts as approval). search: run `search` with the given query. Verify that the files it names still exist.
+3. store: propose durable entries (decisions, patterns, open bugs) with namespace, tags and importance. Store only what the user approves, and report any redactions.
+4. list: summarize entries by namespace and date.
+5. prune and any --overwrite: dry run first, show the exact entries, and run only after the user confirms.
+"""

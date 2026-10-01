@@ -118,6 +118,7 @@ The `agents/` directory contains pre-configured agent personas:
 | `test-engineer.md` | Test strategy and writing |
 | `security-auditor.md` | Vulnerability detection |
 | `web-performance-auditor.md` | Core Web Vitals & performance audit (via `/webperf`) |
+| `memory-specialist.md` | Cross-session memory and context packs (via `/memory`) |
 
 Load an agent definition when you need specialized review. For example, ask your coding agent to "review this change using the code-reviewer agent persona" and provide the agent definition.
 
@@ -137,12 +138,23 @@ The `.claude/commands/` directory contains slash commands for Claude Code:
 | `/code-simplify` | code-simplification |
 | `/ship` | shipping-and-launch |
 | `/webperf` | web-performance-auditor (specialist agent, web apps only) |
+| `/memory` | memory (with the memory-specialist persona) |
 
 > **Note:** When installed as a Claude Code plugin you may see a warning like
 > _"Default commands/ folder is ignored because the manifest sets 'commands'"_.
 > This is expected. The root `commands/` directory belongs to the Antigravity CLI
 > and is intentionally separate from `.claude/commands/`. All Claude Code slash
 > commands load correctly from `.claude/commands/`; the warning is cosmetic.
+
+## Optional Hooks
+
+The `hooks/` directory holds opt-in hooks. None are enabled by default; each has a setup guide:
+
+| Hook | Purpose | Guide |
+|------|---------|-------|
+| `memory-suggest` | Offers "resume with memory?" when a prompt continues stored work | [hooks/MEMORY-SUGGEST.md](../hooks/MEMORY-SUGGEST.md) |
+| `simplify-ignore` | Hides protected blocks from `/code-simplify` | [hooks/SIMPLIFY-IGNORE.md](../hooks/SIMPLIFY-IGNORE.md) |
+| `sdd-cache` | Caches fetched documentation for `source-driven-development` | [hooks/SDD-CACHE.md](../hooks/SDD-CACHE.md) |
 
 ## Using References
 

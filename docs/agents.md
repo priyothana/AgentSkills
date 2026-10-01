@@ -8,6 +8,7 @@ Specialist personas that play a single role with a single perspective. Each pers
 | [security-auditor](../agents/security-auditor.md) | Security Engineer | Vulnerability detection, OWASP-style audit |
 | [test-engineer](../agents/test-engineer.md) | QA Engineer | Test strategy, coverage analysis, Prove-It pattern |
 | [web-performance-auditor](../agents/web-performance-auditor.md) | Web Performance Engineer | Core Web Vitals audit, loading/rendering/network analysis |
+| [memory-specialist](../agents/memory-specialist.md) | Memory Specialist | Resuming multi-session work, storing durable decisions and patterns |
 
 ## How personas relate to skills and commands
 
@@ -37,6 +38,7 @@ Pick this when there's a repeatable workflow you'd otherwise re-explain every ti
 - `/review` → wraps `code-reviewer` with the project's review skill
 - `/test` → wraps `test-engineer` with TDD skill
 - `/webperf` → wraps `web-performance-auditor` for performance-focused audits on web apps
+- `/memory` → wraps `memory-specialist` with the memory skill for cross-session context
 
 ### Slash command (orchestrator — fan-out)
 Pick this only when **independent** investigations can run in parallel and produce reports that a single agent then merges.
@@ -44,6 +46,15 @@ Pick this only when **independent** investigations can run in parallel and produ
 - `/ship` → fans out to `code-reviewer` + `security-auditor` + `test-engineer` in parallel, then synthesizes their reports into a go/no-go decision
 
 This is the only orchestration pattern this repo endorses. See [references/orchestration-patterns.md](../references/orchestration-patterns.md) for the full pattern catalog and anti-patterns.
+
+### Giving a persona prior context (memory)
+
+A persona starts with no knowledge of earlier sessions. When a review, test, or audit continues multi-session work, run `/memory resume` first and include the returned `## Previous Context` pack in the persona's request:
+
+- "Review this change using `code-reviewer`. Previous context: <pack>"
+- `/memory resume payments retry`, then `/test` with the pack in the conversation
+
+`memory-specialist` only produces the pack; it does not call other personas, and they do not read the memory store themselves. This keeps the user as the orchestrator and keeps memory behind their approval. The optional [`memory-suggest` hook](../hooks/MEMORY-SUGGEST.md) offers "resume with memory?" automatically when a prompt looks like a continuation.
 
 ## Decision matrix
 
